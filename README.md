@@ -38,3 +38,6 @@ export PATH=/usr/local/cmake-3.22.5-linux-x86_64/bin:$PATH
 ```bash
 export MESA_GL_VERSION_OVERRIDE=3.3
 ```
+- vscode
+
+官网安装，extension插件安装 C/C++ Extension Pack 即可
