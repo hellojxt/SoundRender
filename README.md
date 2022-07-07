@@ -6,6 +6,7 @@
 sudo apt install gcc g++
 ```
 - cuda 11.1 
+
 显卡driver通过软件与更新-附加驱动-选择第一个安装
 ```bash
 wget https://developer.download.nvidia.com/compute/cuda/11.1.0/local_installers/cuda_11.1.0_455.23.05_linux.run
