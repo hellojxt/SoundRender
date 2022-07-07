@@ -33,6 +33,7 @@ sudo cp -r cmake-3.22.5-linux-x86_64/ /usr/local/
 export PATH=/usr/local/cmake-3.22.5-linux-x86_64/bin:$PATH
 ```
 - opengl 3.3
+
 经测试，需要在~/.bashrc中添加以下内容：
 ```bash
 export MESA_GL_VERSION_OVERRIDE=3.3
