@@ -1,8 +1,17 @@
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(glfw3 REQUIRED)
-include_directories(${GLEW_INCLUDE_DIRS})
+
+if(WIN32)
+	include_directories(glew/include/GL)
+	include_directories(glfw/include/GLFW)
+else()
+	#on LINUX
+	find_package(GLEW REQUIRED)
+	find_package(glfw3 REQUIRED)
+	include_directories(${GLEW_INCLUDE_DIRS})
+endif()
+
 include_directories(${OPENGL_INCLUDE_DIRS})
+
 
 #=================== IMGUI ===================
 
@@ -38,17 +47,45 @@ list(APPEND IMGUI_PUBLIC_INCLUDE_DIRS
 		${IMGUI_SRC_DIR}
 		)
 
-
 set(NAME imgui)
 add_library(${NAME} STATIC ${IMGUI_SOURCES})
-target_link_libraries(${NAME} PUBLIC ${OPENGL_LIBRARIES} glfw ${GLEW_LIBRARIES})
-target_include_directories(${NAME}
-		PUBLIC ${IMGUI_PUBLIC_INCLUDE_DIRS}
-                ${GLFW_DIR}/include
-                ${GLEW_INCLUDE_DIRS}
-				${CMAKE_CURRENT_SOURCE_DIR}
-				${CMAKE_CURRENT_SOURCE_DIR}/glm
-		PRIVATE ${IMGUI_PRIVATE_INCLUDE_DIRS}
-		)
+
+
+if(WIN32)
+
+	target_link_libraries(${NAME} 
+	PUBLIC ${OPENGL_LIBRARIES} 
+	${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib/glfw3.lib 
+	${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib/glfw3_mt.lib  
+	${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib/glfw3dll.lib   
+	${CMAKE_CURRENT_SOURCE_DIR}/glew/lib/glew32.lib  
+	${CMAKE_CURRENT_SOURCE_DIR}/glew/lib/glew32s.lib  
+
+	)
+
+	target_include_directories(${NAME}
+	PUBLIC ${IMGUI_PUBLIC_INCLUDE_DIRS}
+	glew/include/GL
+	glfw/include/GLFW
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/glm
+	PRIVATE ${IMGUI_PRIVATE_INCLUDE_DIRS}
+	)
+
+else()
+	#on LINUX
+	target_link_libraries(${NAME} PUBLIC ${OPENGL_LIBRARIES} glfw ${GLEW_LIBRARIES})
+	target_include_directories(${NAME}
+			PUBLIC ${IMGUI_PUBLIC_INCLUDE_DIRS}
+					${GLFW_DIR}/include
+					${GLEW_INCLUDE_DIRS}
+					${CMAKE_CURRENT_SOURCE_DIR}
+					${CMAKE_CURRENT_SOURCE_DIR}/glm
+			PRIVATE ${IMGUI_PRIVATE_INCLUDE_DIRS}
+			)
+
+endif()
+
+
 
 

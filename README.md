@@ -1,6 +1,12 @@
 # Sound Renderer For NeuralSound
 
-### Dependencies
+
+## build
+
+### 1.build on Linux
+
+#### Dependencies
+
 - gcc, g++
 ```bash
 sudo apt install gcc g++
@@ -39,5 +45,21 @@ export PATH=/usr/local/cmake-3.22.5-linux-x86_64/bin:$PATH
 export MESA_GL_VERSION_OVERRIDE=3.3
 ```
 - vscode
-
 官网安装，extension插件安装 C/C++ Extension Pack 即可
+
+
+
+### 2.build on Windows
+
+#### Dependencies
+
+* Cmake GUI
+* Visual Studio 2022
+
+#### build:
+
+* Open CMake GUI
+* Add "SoundRender-main" as source directory. Add "/build" after this path as build directory
+* Click "configure". Choose VS2022 as the generator 
+* Click "generate". Open ".sln" file in the "build" directory. 
+
