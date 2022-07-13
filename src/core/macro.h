@@ -7,7 +7,9 @@
 #include <bitset>
 #include <vector>
 #include <thrust/complex.h>
-
+#if defined(_WIN32)
+typedef unsigned int uint;
+#endif
 namespace SoundRender
 {
 #define LOG_ERROR_COLOR "\033[1;31m"

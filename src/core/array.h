@@ -4,7 +4,9 @@
 #include <iostream>
 #include <memory>
 #include "macro.h"
-
+#if defined(_WIN32)
+typedef unsigned int uint;
+#endif
 namespace SoundRender
 {
 	template <typename T>
