@@ -157,7 +157,8 @@ namespace SoundRender
         }
         // normalize vertices and move to center
         float3 center = (min_pos + max_pos) / 2.0f;
-        float3 scale = (max_pos - min_pos) / 2.0f;
+        float3 scale_f3 = (max_pos - min_pos) / 2.0f;
+        float scale  = max(max(scale_f3.x, scale_f3.y), scale_f3.z);
         for (int i = 0; i < vertices.size(); i++)
         {
             vertices[i] = (vertices[i] - center) / scale;
