@@ -6,7 +6,7 @@ using namespace SoundRender;
 
 int main()
 {
-    auto filename = std::string(ASSET_DIR) + std::string("/meshes/example.obj");
+    auto filename = std::string(ASSET_DIR) + std::string("/meshes/bunny.obj");
     auto mesh = loadOBJ(filename, true);
     GUI gui;
     MeshRender render;
