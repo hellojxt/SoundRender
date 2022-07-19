@@ -58,6 +58,7 @@ namespace SoundRender
         }
 
         static float CallbackForSound(AudioWapper* audio);
+
     private:
         std::unordered_map<size_t, float> restForces;
         std::mutex restForceMutex;

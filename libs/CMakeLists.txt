@@ -1,13 +1,16 @@
 find_package(OpenGL REQUIRED)
-find_package(ZLIB REQUIRED)
+
 
 if(WIN32)
 	include_directories(glew/include/GL)
 	include_directories(glfw/include/GLFW)
+	include_directories(zlib/include)
+	include_directories(portaudio/include)
 else()
 	#on LINUX
 	find_package(GLEW REQUIRED)
 	find_package(glfw3 REQUIRED)
+	find_package(ZLIB REQUIRED)
 	include_directories(${ZLIB_INCLUDE_DIRS})
 	include_directories(${GLEW_INCLUDE_DIRS})
 endif()
@@ -56,19 +59,31 @@ add_library(${NAME} STATIC ${IMGUI_SOURCES})
 if(WIN32)
 
 	target_link_libraries(${NAME} 
-	PUBLIC ${OPENGL_LIBRARIES} 
+	PUBLIC 
+	${OPENGL_LIBRARIES} 
 	${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib/glfw3.lib 
 	${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib/glfw3_mt.lib  
-	${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib/glfw3dll.lib   
-	${CMAKE_CURRENT_SOURCE_DIR}/glew/lib/glew32.lib  
-	${CMAKE_CURRENT_SOURCE_DIR}/glew/lib/glew32s.lib  
+	${CMAKE_CURRENT_SOURCE_DIR}/glfw/lib/glfw3dll.lib
 
+	${CMAKE_CURRENT_SOURCE_DIR}/glew/lib/glew32.lib  
+	${CMAKE_CURRENT_SOURCE_DIR}/glew/lib/glew32s.lib
+
+	#${CMAKE_CURRENT_SOURCE_DIR}/zlib/lib/libz.lib
+	${CMAKE_CURRENT_SOURCE_DIR}/zlib/lib/libz-static.lib
+	#${CMAKE_CURRENT_SOURCE_DIR}/zlib/lib/libz.dll
+	${CMAKE_CURRENT_SOURCE_DIR}/zlib/lib/libz.exp
+
+	#${CMAKE_CURRENT_SOURCE_DIR}/portaudio/lib/portaudio_x64.lib
+	${CMAKE_CURRENT_SOURCE_DIR}/portaudio/lib/portaudio_static_x64.lib
+	#${CMAKE_CURRENT_SOURCE_DIR}/portaudio/lib/portaudio_x64.dll
 	)
 
 	target_include_directories(${NAME}
 	PUBLIC ${IMGUI_PUBLIC_INCLUDE_DIRS}
-	glew/include/GL
-	glfw/include/GLFW
+	${CMAKE_CURRENT_SOURCE_DIR}/glew/include/GL
+	${CMAKE_CURRENT_SOURCE_DIR}/glfw/include/GLFW
+	${CMAKE_CURRENT_SOURCE_DIR}/zlib/include
+	${CMAKE_CURRENT_SOURCE_DIR}/portaudio/include
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/glm
 	PRIVATE ${IMGUI_PRIVATE_INCLUDE_DIRS}

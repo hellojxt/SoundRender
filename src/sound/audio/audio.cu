@@ -1,5 +1,6 @@
 #include "audio.h"
 
+
 namespace SoundRender
 {
     float AudioWapper::CallbackForSound(AudioWapper* audio)
@@ -48,18 +49,18 @@ namespace SoundRender
         return soundResult;
     }
 
-    float Lerp(float x1, float x2, float coeff)
+    inline float Lerp(float x1, float x2, float coeff)
     {
         return x1 * coeff + x2 * (1 - coeff);
     }
 
-    std::pair<float, float> AudioWapper::GetModalResult(ModalInfo &modalInfo)
+     std::pair<float, float> AudioWapper::GetModalResult(ModalInfo &modalInfo)
     {
         const float camx = modalSound->mesh_render->camera.Position[0], 
             camy = modalSound->mesh_render->camera.Position[1],
             camz = modalSound->mesh_render->camera.Position[2];
         const size_t ffatColNum = modalInfo.ffat[0].size();
-        // Here we need row and col sample intervals are same, otherwise changes are needed.
+        // Here we need row and col sample intervals are the same, otherwise changes are needed.
         const float sampleIntervalRep = ffatColNum / PI;
 
         float theta = std::acos(camz);
@@ -78,6 +79,7 @@ namespace SoundRender
         float q = modalInfo.coeff1 * modalInfo.q1 + modalInfo.coeff2 * modalInfo.q2 + modalInfo.coeff3 * modalInfo.f;
         modalInfo.q2 = modalInfo.q1, modalInfo.q1 = q; // update q.
 
-        return {p, q};
+        //return {p, q};
+        return std::pair(p,q);
     };
 }

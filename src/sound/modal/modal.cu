@@ -130,7 +130,7 @@ namespace SoundRender
         return;
     }
 
-    float Lerp(float x1, float x2, float coeff)
+    inline float Lerp(float x1, float x2, float coeff)
     {
         return x1 * coeff + x2 * (1 - coeff);
     }
