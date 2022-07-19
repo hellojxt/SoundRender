@@ -2,6 +2,7 @@
 #include "window.h"
 #include "audio.h"
 #include "modal.h"
+#include <filesystem>
 
 namespace SoundRender
 {
@@ -14,7 +15,18 @@ namespace SoundRender
         {
             title = "audio window";
             audio.init();
-            modal.init();
+            // Not compile?
+            // auto assetDir = std::string(ASSET_DIR);
+            // auto eigenPath = assetDir + "eigen/bunny.npz";
+            // auto ffatPath = assetDir + "acousticMap/bunny.npz";
+            // auto voxelPath = assetDir + "voxel/bunny.npy";
+
+            auto assetDir = std::filesystem::current_path().parent_path() / "asset";
+
+            auto eigenPath = (assetDir / "eigen") / "bunny.npz";
+            auto ffatPath = (assetDir / "acousticMap") / "bunny.npz";
+            auto voxelPath = (assetDir / "voxel") / "bunny.npy";
+            modal.init(eigenPath.c_str(), ffatPath.c_str(), voxelPath.c_str());
         }
         
         void link_mesh_render(MeshRender* mesh)

@@ -2,17 +2,101 @@
 
 #include "macro.h"
 #include "window.h"
+
+#include "cnpy.h"
+#include <unordered_map>
+#include <mutex>
+
 namespace SoundRender
 {
+    namespace MaterialConst
+    {
+        constexpr float alpha = 60.0f;
+        constexpr float beta = 2e-6f;
+        constexpr float timestep = 1.0f / 44100;
+
+        constexpr int offsets[][3] = {
+            {0,0,0},{1,0,0},
+            {1,1,0},{0,1,0},
+            {0,0,1},{1,0,1},
+            {1,1,1},{0,1,1}
+        };
+    }
+
+    struct ModalInfo
+    {
+        float coeff1;
+        float q1;
+        float coeff2;
+        float q2;
+        float coeff3;
+        float f;
+        std::vector<float> eigenVec;
+        std::vector<std::vector<double>> ffat;
+        ModalInfo(float lambda, size_t index, cnpy::NpyArray &eigenVecs, cnpy::NpyArray &ffats)
+        {
+            using namespace MaterialConst;
+            float omega = std::sqrt(lambda);
+            float ksi = (alpha + beta * lambda) / (2 * omega);
+            float omega_prime = omega * std::sqrt(1 - ksi * ksi);
+            float epsilon = std::exp(-ksi * omega * timestep);
+            float sqrEpsilon = epsilon * epsilon;
+            float theta = omega_prime * timestep;
+            float gamma = std::asin(ksi);
+
+            coeff1 = 2 * epsilon * std::cos(theta);
+            coeff2 = sqrEpsilon;
+
+            float coeff3_item1 = epsilon * std::cos(theta + gamma);
+            float coeff3_item2 = sqrEpsilon * std::cos(2 * theta + gamma);
+            coeff3 = 2 * (coeff3_item1 - coeff3_item2) / (3 * omega * omega_prime);
+
+            q1 = q2 = f = 0.0;
+
+            size_t rank = eigenVecs.shape[0], colNum = eigenVecs.shape[1];
+            eigenVec.reserve(rank);
+            float *eigenVecsData = eigenVecs.data<float>();
+            for (size_t i = 0; i < rank; i++)
+            {
+                eigenVec.push_back(eigenVecsData[i * colNum + index]);
+            }
+
+            size_t ffatRowNum = ffats.shape[1], ffatColNum = ffats.shape[2];
+            double *ffatsData = ffats.data<double>() + ffatRowNum * ffatColNum * index;
+            ffat.reserve(ffatRowNum);
+            for (size_t i = 0; i < ffatRowNum; i++)
+            {
+                size_t baseIndex = i * ffatColNum;
+                ffat.emplace_back(ffatsData + baseIndex, ffatsData + baseIndex + ffatColNum);
+            }
+            return;
+        }
+    };
+
     class ModalSound
     {
     public:
         float force;
         bool soundNeedUpdate = false;
         MeshRender *mesh_render;
-        void init()
+        void init(const char* eigenPath, const char* ffatPath, const char* voxelPath)
         {
-            printf("Write ModalSound init here\n");
+            cnpy::npz_t eigenData = cnpy::npz_load(eigenPath);
+
+            cnpy::NpyArray& rawEigenValues = eigenData["vals"]; // get S
+            cnpy::NpyArray& rawEigenVecs = eigenData["vecs"]; // get U
+            cnpy::NpyArray rawFFAT = cnpy::npz_load(ffatPath, "feats_out_far"); // get FFAT.
+
+            assert(rawFFAT.word_size == sizeof(double));
+            assert(rawEigenValues.word_size == sizeof(float));
+            assert(rawEigenVecs.word_size == sizeof(float));
+            //FilterAndFillModalInfos(rawEigenValues, rawEigenVecs, rawFFAT);
+            FillModalInfos(rawEigenValues, rawEigenVecs, rawFFAT);
+
+            cnpy::NpyArray rawVoxelData = cnpy::npy_load(voxelPath);
+            assert(rawVoxelData.word_size == sizeof(int));
+            FillVertID(rawVoxelData);
+            return;
         }
 
         void link_mesh_render(MeshRender *mesh_render)
@@ -34,5 +118,16 @@ namespace SoundRender
                 soundNeedUpdate = true;
             }
         }
+
+        std::vector<ModalInfo> modalInfos;
+        std::vector<std::vector<std::vector<int>>> vertData;
+        std::pair<float, float> GetModalResult(ModalInfo& modalInfo);
+    private:
+        [[deprecated("Because data have been filtered.")]]
+        void FilterAndFillModalInfos(cnpy::NpyArray& rawEigenValues, cnpy::NpyArray& rawEigenVecs, cnpy::NpyArray& rawFFAT);
+
+        void FillModalInfos(cnpy::NpyArray& rawEigenValues, cnpy::NpyArray& rawEigenVecs, cnpy::NpyArray& rawFFAT);
+
+        void FillVertID(cnpy::NpyArray& rawVoxelData);
     };
 }

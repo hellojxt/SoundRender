@@ -1,0 +1,1 @@
+add_library(cnpylib STATIC cnpy.cpp)
