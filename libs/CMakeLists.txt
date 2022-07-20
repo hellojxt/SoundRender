@@ -11,6 +11,7 @@ else()
 	find_package(GLEW REQUIRED)
 	find_package(glfw3 REQUIRED)
 	find_package(ZLIB REQUIRED)
+	find_package(portaudio REQUIRED)
 	include_directories(${ZLIB_INCLUDE_DIRS})
 	include_directories(${GLEW_INCLUDE_DIRS})
 endif()
@@ -91,7 +92,7 @@ if(WIN32)
 
 else()
 	#on LINUX
-	target_link_libraries(${NAME} PUBLIC ${OPENGL_LIBRARIES} glfw ${GLEW_LIBRARIES} ${ZLIB_LIBRARIES})
+	target_link_libraries(${NAME} PUBLIC ${OPENGL_LIBRARIES} glfw ${GLEW_LIBRARIES} ${ZLIB_LIBRARIES} portaudio)
 	target_include_directories(${NAME}
 			PUBLIC ${IMGUI_PUBLIC_INCLUDE_DIRS}
 					${GLFW_DIR}/include

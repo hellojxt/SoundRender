@@ -12,7 +12,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/core
                     ${CMAKE_CURRENT_SOURCE_DIR}/src/sound/modal
                     ${CMAKE_CURRENT_SOURCE_DIR}/src/sound/cnpy
                     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui 
-	${CMAKE_CURRENT_SOURCE_DIR}/libs/zlib/include 
+	                ${CMAKE_CURRENT_SOURCE_DIR}/libs/zlib/include
                     )
 add_subdirectory(libs)
 add_subdirectory(src)

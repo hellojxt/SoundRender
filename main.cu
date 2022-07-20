@@ -16,7 +16,7 @@ using namespace SoundRender;
 
 //test mode on: play sine wave while the GUI window is open
 //test mode off: work as the sound renderer
-#define test
+// #define test
 
 #ifdef test
 typedef struct
@@ -30,9 +30,9 @@ paSoundData;
 #else
 struct paSoundData
 {
-    AudioWapper& aw;
+    AudioWapper* aw;
 
-    paSoundData(AudioWapper& another) :aw(another) {};
+    paSoundData(AudioWapper* another) :aw(another) {};
 };
 #endif
 
@@ -60,7 +60,7 @@ static int patestCallback(const void* inputBuffer, void* outputBuffer,
         data->right_phase += 1;
         if (data->right_phase >= TABLE_SIZE) data->right_phase -= TABLE_SIZE;
 #else
-        float sound = data->aw.CallbackForSound(&data->aw);
+        float sound = AudioWapper::CallbackForSound(data->aw);
         *out++ = sound;  /* left */
         *out++ = sound;  /* right */
 #endif
@@ -104,7 +104,7 @@ int main()
     data.left_phase = data.right_phase = 0;
 #else
 
-    paSoundData data=paSoundData(audio_window.audio);
+    paSoundData data=paSoundData(&audio_window.audio);
 #endif
   
 

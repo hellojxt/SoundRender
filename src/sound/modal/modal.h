@@ -6,6 +6,7 @@
 #include "cnpy.h"
 #include <unordered_map>
 #include <mutex>
+#include <algorithm>
 
 namespace SoundRender
 {
@@ -92,6 +93,7 @@ namespace SoundRender
             assert(rawEigenVecs.word_size == sizeof(float));
             //FilterAndFillModalInfos(rawEigenValues, rawEigenVecs, rawFFAT);
             FillModalInfos(rawEigenValues, rawEigenVecs, rawFFAT);
+            FillBoundingBoxData();
 
             cnpy::NpyArray rawVoxelData = cnpy::npy_load(voxelPath);
             assert(rawVoxelData.word_size == sizeof(int));
@@ -119,6 +121,16 @@ namespace SoundRender
             }
         }
 
+        std::tuple<size_t, size_t, size_t> GetNormalizedID(float x, float y, float z)
+        {
+            size_t voxelNum = vertData.size() - 1;
+            x -= bound[0], y-= bound[1], z-= bound[2];
+            auto CoordToID = [=](float c)
+            { return static_cast<size_t>((c + 0.5f) * voxelNum - 0.5f); };
+            return {CoordToID(x / diff), CoordToID(y / diff), CoordToID(z / diff)};
+        }
+
+
         std::vector<ModalInfo> modalInfos;
         std::vector<std::vector<std::vector<int>>> vertData;
         std::pair<float, float> GetModalResult(ModalInfo& modalInfo);
@@ -129,5 +141,33 @@ namespace SoundRender
         void FillModalInfos(cnpy::NpyArray& rawEigenValues, cnpy::NpyArray& rawEigenVecs, cnpy::NpyArray& rawFFAT);
 
         void FillVertID(cnpy::NpyArray& rawVoxelData);
+
+        void FillBoundingBoxData()
+        {
+            const auto& vertices = mesh_render->vertices;
+            size_t vertNum = vertices.size();
+            float maxBound[3] = {0}, minBound[3] = {1e5f, 1e5f, 1e5f};
+            auto UpdateMinMax = [&](int j, float m){
+                if(m > maxBound[j])
+                    maxBound[j] = m;
+                else if(m < minBound[j])
+                    minBound[j] = m;
+                return;
+            };
+            for(size_t i = 0; i < vertNum; ++i)
+            {
+                UpdateMinMax(0, vertices[i].x);
+                UpdateMinMax(1, vertices[i].y);
+                UpdateMinMax(2, vertices[i].z);
+            }
+
+            diff = std::max({maxBound[0] - minBound[0], maxBound[1] - minBound[1], maxBound[2] - minBound[2]});
+            for(size_t i = 0; i < 3; ++i)
+                bound[i] = (maxBound[i] + minBound[i]) / 2;
+
+            return;
+        }
+        float diff;
+        float bound[3];
     };
 }

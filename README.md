@@ -20,6 +20,7 @@ sudo sh cuda_11.1.0_455.23.05_linux.run
 ```
 重要：把driver一项去掉，否则可能出现图形界面崩溃的情况。
 在~/.bashrc中添加以下内容：
+
 ```bash
 export PATH=/usr/local/cuda-11.1/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.1/lib64:$LD_LIBRARY_PATH
@@ -44,8 +45,27 @@ export PATH=/usr/local/cmake-3.22.5-linux-x86_64/bin:$PATH
 ```bash
 export MESA_GL_VERSION_OVERRIDE=3.3
 ```
+- zlib
+
+```bash
+sudo apt install zlib1g
+```
+
++ portaudio
+
+```bash
+sudo apt-get install libasound-dev
+
+wget https://github.com/PortAudio/portaudio/archive/refs/tags/v19.7.0.tar.gz
+tar -xvf portaudio-19.7.0.tar.gz
+cd portaudio-19.7.0
+cmake . -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr/local
+make
+sudo make install
+```
+
 - vscode
-官网安装，extension插件安装 C/C++ Extension Pack 即可
+  官网安装，extension插件安装 C/C++ Extension Pack 即可
 
 
 

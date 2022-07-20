@@ -135,4 +135,42 @@ namespace SoundRender
         return x1 * coeff + x2 * (1 - coeff);
     }
 
+    std::pair<float, float>  ModalSound::GetModalResult(ModalInfo &modalInfo)
+    {
+        const float camx = mesh_render->camera.Position[0], 
+            camy = mesh_render->camera.Position[1],
+            camz = mesh_render->camera.Position[2];
+        const float r = std::sqrt(camx * camx + camy * camy + camz * camz);
+        const size_t ffatColNum = modalInfo.ffat[0].size();
+        // Here we need row and col sample intervals are the same, otherwise changes are needed.
+        const float sampleIntervalRep = ffatColNum / PI;
+
+        float theta = std::acos(camz / r);
+        float phi = camy <= 1e-5f && camx <= 1e-5f && camx >= -1e-5f && camy >= -1e-5f ? 0.0f : std::atan2(camy, camx) + PI;
+
+        float colInter = theta * sampleIntervalRep, rowInter = phi * sampleIntervalRep;
+        int col = static_cast<int>(colInter);
+        float colFrac = colInter - static_cast<float>(col);
+        int row = static_cast<int>(rowInter);
+        float rowFrac = rowInter - static_cast<float>(row);
+        // printf("ffatSize : %zu * %zu; row = %d, col = %d\n", modalInfo.ffat.size(), ffatColNum, row, col);
+        
+        // bi-Lerp.
+        // float interResult = Lerp(Lerp(modalInfo.ffat[row][col], modalInfo.ffat[row + 1][col], rowFrac),
+        //                          Lerp(modalInfo.ffat[row][col + 1], modalInfo.ffat[row + 1][col + 1], rowFrac), colFrac);
+
+        float interResult = 1.0f;
+
+        float p = interResult / r;
+        float q = modalInfo.coeff1 * modalInfo.q1 + modalInfo.coeff2 * modalInfo.q2 + modalInfo.coeff3 * modalInfo.f;
+        modalInfo.q2 = modalInfo.q1, modalInfo.q1 = q; // update q.
+        modalInfo.f = 0;
+
+        // printf("camx = %f, camy = %f, camz = %f, ffatColNum = %zu, theta = %f, phi = %f, colInter = %f, col = %d, rowInter = %f,"
+        // "row = %d, modalInfo.ffat : [row][col] = %f, [row+1][col] = %f, [row][col+1]=%f, [row+1][col+1]=%f, interResult = %f\n", 
+        // camx, camy, camz, ffatColNum, theta, phi, colInter, col, rowInter, row, modalInfo.ffat[row][col], modalInfo.ffat[row+1][col],
+        // modalInfo.ffat[row][col+1],modalInfo.ffat[row+1][col+1],interResult);
+
+        return {p, q};
+    };
 }
