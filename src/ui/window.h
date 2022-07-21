@@ -55,7 +55,10 @@ namespace SoundRender
         GArr<int3> triangles_g;
         CArr<Triangle> meshData;
         GArr<Triangle> meshData_g;
+        float3 bbox_min;
+        float3 bbox_max;
         int selectedTriangle = -1;
+        bool soundNeedsUpdate = false;
         bool meshNeedsUpdate = false;
         ImVec2 wsize;
         std::vector<glm::vec3> pointLightPositions;

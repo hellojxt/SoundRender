@@ -48,7 +48,7 @@ export MESA_GL_VERSION_OVERRIDE=3.3
 - zlib
 
 ```bash
-sudo apt install zlib1g
+sudo apt install zlib1g-dev
 ```
 
 + portaudio
@@ -56,7 +56,7 @@ sudo apt install zlib1g
 ```bash
 sudo apt-get install libasound-dev
 
-wget https://github.com/PortAudio/portaudio/archive/refs/tags/v19.7.0.tar.gz
+wget https://github.com/PortAudio/portaudio/archive/refs/tags/v19.7.0.tar.gz -O portaudio-19.7.0.tar.gz
 tar -xvf portaudio-19.7.0.tar.gz
 cd portaudio-19.7.0
 cmake . -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr/local

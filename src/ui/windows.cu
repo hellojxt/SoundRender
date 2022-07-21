@@ -2,7 +2,6 @@
 #include "gui_kernel.h"
 #include <thrust/extrema.h>
 #include <thrust/execution_policy.h>
-#include "audio_window.h"
 
 namespace SoundRender
 {
@@ -136,6 +135,7 @@ namespace SoundRender
                 meshData[selectedTriangle].flag2 = 1;
                 meshData[selectedTriangle].flag3 = 1;
                 meshNeedsUpdate = true;
+                soundNeedsUpdate = true;
             }
         }
     }
@@ -163,6 +163,8 @@ namespace SoundRender
         {
             vertices[i] = (vertices[i] - center) / scale;
         }
+        bbox_min = make_float3(-1.0f, -1.0f, -1.0f);
+        bbox_max = make_float3(1.0f, 1.0f, 1.0f);
         vertices_g.assign(vertices);
         triangles_g.assign(triangles);
         meshData_g.resize(triangles_g.size());
