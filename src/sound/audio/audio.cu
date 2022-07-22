@@ -89,6 +89,7 @@ namespace SoundRender
         float scale_factor = 2 * M_PI * 200000;
         for (auto &modalInfo : modalSound->modalInfos)
         {
+            float ffat_factor = modalSound->GetFFATFactor(modalInfo) * 10000;
             float q1 = modalInfo.q1;
             float q2 = modalInfo.q2;
             float f = modalInfo.f;
@@ -100,11 +101,12 @@ namespace SoundRender
                 float q = c1 * q1 + c2 * q2 + c3 * f;
                 q2 = q1;
                 q1 = q;
-                data.signal[(data.update_phase + i) % TABLE_SIZE] += q * scale_factor;
+                data.signal[(data.update_phase + i) % TABLE_SIZE] += q * ffat_factor * scale_factor;
             }
             modalInfo.q1 = q1;
             modalInfo.q2 = q2;
         }
+        printf("\n");
         data.update_phase = data.update_phase + sample_num;
     }
 

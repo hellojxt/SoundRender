@@ -62,7 +62,7 @@ namespace SoundRender
         assert(rawFFAT.word_size == sizeof(double));
         assert(rawEigenValues.word_size == sizeof(float));
         assert(rawEigenVecs.word_size == sizeof(float));
-        // FilterAndFillModalInfos(rawEigenValues, rawEigenVecs, rawFFAT);
+
         FillModalInfos(rawEigenValues, rawEigenVecs, rawFFAT);
         cnpy::NpyArray rawVoxelData = cnpy::npy_load(voxelPath);
         assert(rawVoxelData.word_size == sizeof(int));
@@ -120,7 +120,7 @@ namespace SoundRender
         float3 relative_coord = (center - bbMin) / (bbMax - bbMin);
         return make_int3((relative_coord * (float)voxelNum));
     }
-    // This one is used for filtered data.
+
     void ModalSound::FillModalInfos(cnpy::NpyArray &rawEigenValues, cnpy::NpyArray &rawEigenVecs, cnpy::NpyArray &rawFFAT)
     {
         size_t selectNum = rawFFAT.shape[0];
@@ -192,6 +192,33 @@ namespace SoundRender
     inline float Lerp(float x1, float x2, float coeff)
     {
         return x1 * coeff + x2 * (1 - coeff);
+    }
+
+    float ModalSound::GetFFATFactor(ModalInfo& modalInfo)
+    {
+        const float camx = mesh_render->camera.Position[0],
+            camy = mesh_render->camera.Position[1],
+            camz = mesh_render->camera.Position[2];
+        const float r = std::sqrt(camx * camx + camy * camy + camz * camz);
+        const size_t ffatColNum = modalInfo.ffat[0].size();
+        // Here we need row and col sample intervals are the same, otherwise changes are needed.
+        const float sampleIntervalRep = ffatColNum / PI;
+
+        float theta = std::acos(camz / r);
+        float phi = camy <= 1e-5f && camx <= 1e-5f && camx >= -1e-5f && camy >= -1e-5f ? 0.0f : std::atan2(camy, camx) + PI;
+
+        float colInter = theta * sampleIntervalRep, rowInter = phi * sampleIntervalRep;
+        int col = static_cast<int>(colInter);
+        float colFrac = colInter - static_cast<float>(col);
+        int row = static_cast<int>(rowInter);
+        float rowFrac = rowInter - static_cast<float>(row);
+        // printf("ffatSize : %zu * %zu; row = %d, col = %d\n", modalInfo.ffat.size(), ffatColNum, row, col);
+
+        // bi-Lerp.
+        float interResult = Lerp(Lerp(modalInfo.ffat[row][col], modalInfo.ffat[row + 1][col], rowFrac),
+                                 Lerp(modalInfo.ffat[row][col + 1], modalInfo.ffat[row + 1][col + 1], rowFrac), colFrac);
+
+        return interResult / r;
     }
 
     // std::pair<float, float>  ModalSound::GetModalResult(ModalInfo &modalInfo)

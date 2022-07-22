@@ -56,8 +56,8 @@ namespace SoundRender
         void update();
         std::vector<ModalInfo> modalInfos;
         std::vector<std::vector<std::vector<int>>> vertData;
-        std::pair<float, float> GetModalResult(ModalInfo &modalInfo);
         int3 GetNormalizedID(float3 center);
+        float GetFFATFactor(ModalInfo&);
 
     private:
         void FillModalInfos(cnpy::NpyArray &rawEigenValues, cnpy::NpyArray &rawEigenVecs, cnpy::NpyArray &rawFFAT);

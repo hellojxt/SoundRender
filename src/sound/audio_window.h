@@ -35,6 +35,6 @@ namespace SoundRender
             ImGui::Text("\n");
             audio.update();
         }
-        
+        ~AudioWindow() { audio.close();}
     };
 }
