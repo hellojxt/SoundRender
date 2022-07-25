@@ -45,7 +45,7 @@ namespace SoundRender
         // Setup Platform/Renderer bindings
         ImGui_ImplGlfw_InitForOpenGL(window, true);
         ImGui_ImplOpenGL3_Init(glsl_version);
-        io.Fonts->AddFontFromFileTTF("../asset/fonts/RadioCanada.ttf", 18.0f);
+        // io.Fonts->AddFontFromFileTTF("../asset/fonts/RadioCanada.ttf", 18.0f);
         ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
         io.IniFilename = CONFIG_FILE;

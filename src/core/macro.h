@@ -44,7 +44,7 @@ namespace SoundRender
 	std::cout.precision(ss_##x);
 
 #define PI 3.14159265359
-#define DYN_FUNC __host__ __device__
+#define CGPU_FUNC __host__ __device__
 #define GPU_FUNC __device__
 #define CPU_FUNC __host__
 #define RAND_F (float)rand() / (float)RAND_MAX
