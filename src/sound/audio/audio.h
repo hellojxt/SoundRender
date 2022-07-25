@@ -21,7 +21,20 @@ namespace SoundRender
         long int update_phase;
     } paSoundData;
 
-    
+    class SignalPlotData{
+        public:
+        float x[TABLE_SIZE];
+        float y[TABLE_SIZE];
+        int size;
+        SignalPlotData(){
+            for (int i = 0; i < TABLE_SIZE; i++)
+            {
+                x[i] = i;
+                y[i] = 0;
+            }
+            size = TABLE_SIZE;
+        }
+    };
 
     class AudioWapper
     {
@@ -32,7 +45,7 @@ namespace SoundRender
         PaError err;
         paSoundData data;
         long int last_phase;
-
+        SignalPlotData signalPlotData;
         AudioWapper();
         void init()
         {

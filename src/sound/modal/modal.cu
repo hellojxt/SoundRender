@@ -55,6 +55,7 @@ namespace SoundRender
 
     void ModalSound::init(const char *eigenPath, const char *ffatPath, const char *voxelPath)
     {
+        click_current_frame = false;
         cnpy::npz_t eigenData = cnpy::npz_load(eigenPath);
         cnpy::NpyArray &rawEigenValues = eigenData["vals"];                 // get S
         cnpy::NpyArray &rawEigenVecs = eigenData["vecs"];                   // get U
@@ -84,13 +85,15 @@ namespace SoundRender
         ImGui::SliderFloat("Click Force", &force, 0.0f, 1.0f);
         ImGui::Text("Force: %f", force);
         ImGui::Text("Selected Triangle Index: %d", mesh_render->selectedTriangle);
-        reset_modal_f();
-        if (mesh_render->soundNeedsUpdate)
+
+        // if click or space key is pressed
+        if ((mesh_render->soundNeedsUpdate || ImGui::IsKeyPressed(GLFW_KEY_SPACE)) && mesh_render->selectedTriangle != -1)
         {
             int3 tri = mesh_render->triangles[mesh_render->selectedTriangle];
             select_point = GetTriangleCenter(tri, mesh_render->vertices);
-            select_voxel_idx = GetNormalizedID(select_point);
             auto norm = GetTriangleNormal(tri, mesh_render->vertices);
+            select_voxel_idx = GetNormalizedID(select_point);
+
             for (int i = 0; i < 8; i++)
             {
                 auto offset = MaterialConst::offsets[i];
@@ -102,10 +105,13 @@ namespace SoundRender
                     modalInfo.f += mode_f * force / 8;
                 }
             }
+            click_current_frame = true;
             mesh_render->soundNeedsUpdate = false;
         }
         ImGui::Text("Selected Triangle Center: (%f, %f, %f)", select_point.x, select_point.y, select_point.z);
         ImGui::Text("Selected Voxel Index: (%d, %d, %d)", select_voxel_idx.x, select_voxel_idx.y, select_voxel_idx.z);
+        if (select_voxel_idx.x >= 0 && select_voxel_idx.y >= 0 && select_voxel_idx.z >= 0)
+            ImGui::Text("Selected Voxel value: %d", voxelData(select_voxel_idx.x, select_voxel_idx.y, select_voxel_idx.z));
         ImGui::Text("Selected Voxel Vertex Index: ");
         for (int i = 0; i < 8; i++)
         {
@@ -115,7 +121,7 @@ namespace SoundRender
 
     int3 ModalSound::GetNormalizedID(float3 center)
     {
-        size_t voxelNum = vertData.size() - 1;
+        size_t voxelNum = voxelData.batchs - 1;
         float3 bbMin = mesh_render->bbox_min, bbMax = mesh_render->bbox_max;
         float3 relative_coord = (center - bbMin) / (bbMax - bbMin);
         return make_int3((relative_coord * (float)voxelNum));
@@ -135,35 +141,27 @@ namespace SoundRender
 
     void ModalSound::FillVertID(cnpy::NpyArray &rawVoxelData)
     {
-        int *voxelData = rawVoxelData.data<int>();
+        int *voxelDataPointer = rawVoxelData.data<int>();
         size_t xSize = rawVoxelData.shape[0], ySize = rawVoxelData.shape[1],
                zSize = rawVoxelData.shape[2];
 
         // allocate memory.
-        vertData.resize(xSize + 1);
-        for (auto &i : vertData)
-        {
-            i.resize(ySize + 1);
-            for (auto &j : i)
-            {
-                j.resize(zSize + 1, 0);
-            }
-        }
+        voxelData = CArr3D<int>(xSize, ySize, zSize, voxelDataPointer);
+        vertData.resize(xSize + 1, ySize + 1, zSize + 1);
+        vertData.reset();
 
         // check voxel in object.
         for (size_t i = 0; i < xSize; i++)
         {
-            size_t baseIndex1 = i * ySize * zSize;
             for (size_t j = 0; j < ySize; j++)
             {
-                size_t baseIndex = j * zSize + baseIndex1;
                 for (size_t k = 0; k < zSize; k++)
                 {
-                    if (voxelData[baseIndex + k] == 1)
+                    if (voxelData(i, j, k) == 1)
                     {
                         for (auto &offset : MaterialConst::offsets)
                         {
-                            vertData[i + offset[0]][j + offset[1]][k + offset[2]] = 1;
+                            vertData(i + offset[0], j + offset[1], k + offset[2]) = 1;
                         }
                     }
                 }
@@ -172,16 +170,16 @@ namespace SoundRender
 
         // put id in vert bucket.
         int cnt = 0;
-        for (auto &i : vertData)
+        for (size_t i = 0; i < xSize + 1; i++)
         {
-            for (auto &j : i)
+            for (size_t j = 0; j < ySize + 1; j++)
             {
-                for (int &k : j)
+                for (size_t k = 0; k < zSize + 1; k++)
                 {
-                    if (k == 1)
+                    if (vertData(i, j, k) == 1)
                     {
-                        k = cnt;
-                        ++cnt;
+                        vertData(i, j, k) = cnt;
+                        cnt++;
                     }
                 }
             }
@@ -194,11 +192,11 @@ namespace SoundRender
         return x1 * coeff + x2 * (1 - coeff);
     }
 
-    float ModalSound::GetFFATFactor(ModalInfo& modalInfo)
+    float ModalSound::GetFFATFactor(ModalInfo &modalInfo)
     {
         const float camx = mesh_render->camera.Position[0],
-            camy = mesh_render->camera.Position[1],
-            camz = mesh_render->camera.Position[2];
+                    camy = mesh_render->camera.Position[1],
+                    camz = mesh_render->camera.Position[2];
         const float r = std::sqrt(camx * camx + camy * camy + camz * camz) + 1e-4f; // to prevent singular point.
         const size_t ffatRowNum = modalInfo.ffat.size();
         const size_t ffatColNum = modalInfo.ffat[0].size();
@@ -207,7 +205,7 @@ namespace SoundRender
         const float colSampleIntervalRep = ffatColNum / PI;
 
         float theta = std::acos(camz / r);
-        float phi = camy <= 1e-5f && camx <= 1e-5f && camx >= -1e-5f && camy >= -1e-5f ? 0.0f : std::fmod(std::atan2(camy, camx) + 2 * PI, 2* PI);
+        float phi = camy <= 1e-5f && camx <= 1e-5f && camx >= -1e-5f && camy >= -1e-5f ? 0.0f : std::fmod(std::atan2(camy, camx) + 2 * PI, 2 * PI);
 
         float colInter = theta * colSampleIntervalRep, rowInter = phi * rowSampleIntervalRep;
         int col = static_cast<int>(colInter);

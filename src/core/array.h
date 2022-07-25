@@ -143,14 +143,14 @@ namespace SoundRender
 		 */
 		void clear();
 
-		DYN_FUNC inline const T *begin() const { return m_data; }
-		DYN_FUNC inline T *begin() { return m_data; }
+		CGPU_FUNC inline const T *begin() const { return m_data; }
+		CGPU_FUNC inline T *begin() { return m_data; }
 
-		DYN_FUNC inline const T *data() const { return m_data; }
-		DYN_FUNC inline T *data() { return m_data; }
+		CGPU_FUNC inline const T *data() const { return m_data; }
+		CGPU_FUNC inline T *data() { return m_data; }
 
-		DYN_FUNC inline const T *end() const { return m_data + m_totalNum; }
-		DYN_FUNC inline T *end() { return m_data + m_totalNum; }
+		CGPU_FUNC inline const T *end() const { return m_data + m_totalNum; }
+		CGPU_FUNC inline T *end() { return m_data + m_totalNum; }
 
 		GPU_FUNC inline T &operator[](unsigned int id)
 		{
@@ -162,10 +162,10 @@ namespace SoundRender
 			return m_data[id];
 		}
 
-		DYN_FUNC inline uint size() const { return m_totalNum; }
-		DYN_FUNC inline bool isCPU() const { return false; }
-		DYN_FUNC inline bool isGPU() const { return true; }
-		DYN_FUNC inline bool isEmpty() const { return m_data == nullptr; }
+		CGPU_FUNC inline uint size() const { return m_totalNum; }
+		CGPU_FUNC inline bool isCPU() const { return false; }
+		CGPU_FUNC inline bool isGPU() const { return true; }
+		CGPU_FUNC inline bool isEmpty() const { return m_data == nullptr; }
 
 		void assign(const GArr<T> &src);
 		void assign(const CArr<T> &src);
@@ -216,12 +216,12 @@ namespace SoundRender
 	class SArr
 	{
 	public:
-		DYN_FUNC SArr(){};
-		DYN_FUNC inline T &operator[](unsigned int id)
+		CGPU_FUNC SArr(){};
+		CGPU_FUNC inline T &operator[](unsigned int id)
 		{
 			return m_data[id];
 		}
-		DYN_FUNC inline const T &operator[](unsigned int id) const
+		CGPU_FUNC inline const T &operator[](unsigned int id) const
 		{
 			return m_data[id];
 		}

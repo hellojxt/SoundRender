@@ -3,6 +3,7 @@
 #include "audio.h"
 #include "modal.h"
 #include <filesystem>
+#include "string.h"
 
 namespace SoundRender
 {
@@ -11,15 +12,19 @@ namespace SoundRender
     public:
         AudioWapper audio;
         ModalSound modal;
+        std::string filename;
+        AudioWindow(std::string filename_){
+            filename = filename_;            
+        }
         void init()
         {
             title = "audio window";
             audio.init();
-
-            auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/bunny.npz");
-            auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/bunny.npz");
-            auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/bunny.npy");
-
+            auto basename = filename.substr(filename.find("meshes/") + 7);
+            basename = basename.substr(0, basename.find("."));
+            auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") +  basename + std::string(".npz");
+            auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") +  basename + std::string(".npz");
+            auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/") + basename + std::string(".npy");
             modal.init(eigenPath.c_str(), ffatPath.c_str(), voxelPath.c_str());
         }
         
