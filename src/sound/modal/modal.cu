@@ -18,22 +18,8 @@ namespace SoundRender
 
     ModalInfo::ModalInfo(float lambda, size_t index, cnpy::NpyArray &eigenVecs, cnpy::NpyArray &ffats)
     {
-        using namespace MaterialConst;
-        float omega = std::sqrt(lambda);
-        float ksi = (alpha + beta * lambda) / (2 * omega);
-        float omega_prime = omega * std::sqrt(1 - ksi * ksi);
-        float epsilon = std::exp(-ksi * omega * timestep);
-        float sqrEpsilon = epsilon * epsilon;
-        float theta = omega_prime * timestep;
-        float gamma = std::asin(ksi);
-
-        coeff1 = 2 * epsilon * std::cos(theta);
-        coeff2 = -sqrEpsilon;
-
-        float coeff3_item1 = epsilon * std::cos(theta + gamma);
-        float coeff3_item2 = sqrEpsilon * std::cos(2 * theta + gamma);
-        coeff3 = 2 * (coeff3_item1 - coeff3_item2) / (3 * omega * omega_prime);
-
+        eigenVal = lambda;
+        SetMaterial(0);
         size_t rank = eigenVecs.shape[0], colNum = eigenVecs.shape[1];
         eigenVec.reserve(rank);
         float *eigenVecsData = eigenVecs.data<float>();
@@ -52,6 +38,28 @@ namespace SoundRender
         }
         f = q1 = q2 = 0;
     }
+
+    void ModalInfo::SetMaterial(int chosenID)
+    {
+        float alpha = MaterialConst::alpha[chosenID], beta = MaterialConst::beta[chosenID];
+        float lambda = eigenVal;
+
+        float omega = std::sqrt(lambda);
+        float ksi = (alpha + beta * lambda) / (2 * omega);
+        float omega_prime = omega * std::sqrt(1 - ksi * ksi);
+        float epsilon = std::exp(-ksi * omega * MaterialConst::timestep);
+        float sqrEpsilon = epsilon * epsilon;
+        float theta = omega_prime * MaterialConst::timestep;
+        float gamma = std::asin(ksi);
+
+        coeff1 = 2 * epsilon * std::cos(theta);
+        coeff2 = -sqrEpsilon;
+
+        float coeff3_item1 = epsilon * std::cos(theta + gamma);
+        float coeff3_item2 = sqrEpsilon * std::cos(2 * theta + gamma);
+        coeff3 = 2 * (coeff3_item1 - coeff3_item2) / (3 * omega * omega_prime);
+        return;
+    };
 
     void ModalSound::init(const char *eigenPath, const char *ffatPath, const char *voxelPath)
     {
@@ -85,6 +93,12 @@ namespace SoundRender
         ImGui::SliderFloat("Click Force", &force, 0.0f, 1.0f);
         ImGui::Text("Force: %f", force);
         ImGui::Text("Selected Triangle Index: %d", mesh_render->selectedTriangle);
+        ImGui::Text("Camera Zoom : %f",mesh_render->camera.Zoom);
+        float camR = mesh_render->camera.Position.length();
+        static float camposCoeff = camR / mesh_render->camera.Zoom;
+        
+        mesh_render->camera.Position *= camposCoeff * mesh_render->camera.Zoom / camR;
+        camposCoeff = camR / mesh_render->camera.Zoom;
 
         // if click or space key is pressed
         if ((mesh_render->soundNeedsUpdate || ImGui::IsKeyPressed(GLFW_KEY_SPACE)) && mesh_render->selectedTriangle != -1)
@@ -187,6 +201,13 @@ namespace SoundRender
         return;
     }
 
+    void ModalSound::SetMaterial(int chosenID)
+    {
+        for(auto& modalInfo : modalInfos)
+            modalInfo.SetMaterial(chosenID);
+        return;
+    }
+
     inline float Lerp(float x1, float x2, float coeff)
     {
         return x1 * coeff + x2 * (1 - coeff);
@@ -200,7 +221,6 @@ namespace SoundRender
         const float r = std::sqrt(camx * camx + camy * camy + camz * camz) + 1e-4f; // to prevent singular point.
         const size_t ffatRowNum = modalInfo.ffat.size();
         const size_t ffatColNum = modalInfo.ffat[0].size();
-        // Here we need row and col sample intervals are the same, otherwise changes are needed.
         const float rowSampleIntervalRep = ffatRowNum / (2 * PI);
         const float colSampleIntervalRep = ffatColNum / PI;
 

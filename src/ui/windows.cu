@@ -190,7 +190,6 @@ namespace SoundRender
 
     void MeshRender::update()
     {
-
         ImGui::BeginChild("Render");
         resize();
         event();
