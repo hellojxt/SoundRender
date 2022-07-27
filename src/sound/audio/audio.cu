@@ -2,6 +2,7 @@
 
 namespace SoundRender
 {
+    
     static int patestCallback(const void *inputBuffer, void *outputBuffer,
                               unsigned long framesPerBuffer,
                               const PaStreamCallbackTimeInfo *timeInfo,
@@ -73,6 +74,24 @@ namespace SoundRender
         float left_phase = data.left_phase;
         ImGui::Text("delta_phase: %d", (int)(data.update_phase - left_phase));
         ImGui::Text("TABLE_SIZE: %d", TABLE_SIZE);
+
+        const char* items[] = { "Ceramic ", "Glass", "Wood", "Plastic", "Iron", "Polycarbonate", "Steel", "Tin"};
+        static int item_current_idx = 0; // Here we store our selection data as an index.
+        if (ImGui::BeginListBox("listbox 1"))
+        {
+            for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+            {
+                const bool is_selected = (item_current_idx == n);
+                if (ImGui::Selectable(items[n], is_selected))
+                    item_current_idx = n;
+
+                // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndListBox();
+        }
+        modalSound->SetMaterial( item_current_idx );
         int sample_num;
         if (last_phase == -1)
         {

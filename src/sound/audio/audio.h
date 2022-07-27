@@ -12,6 +12,7 @@ namespace SoundRender
 #define FRAMES_PER_BUFFER (64)
 #define TABLE_SIZE (4096)
 #define DELTA_SAMPLE_NUM (1024)
+#define M_PI (3.1415926)
 
     typedef struct
     {
