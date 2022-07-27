@@ -5,6 +5,11 @@
 #include <algorithm>
 namespace SoundRender
 {
+    namespace CamCorrection
+    {
+        float scale = 0.0f;
+    }
+
     float3 GetTriangleCenter(int3 tri, CArr<float3> &vertArr)
     {
         return (vertArr[tri.x] + vertArr[tri.y] + vertArr[tri.z]) / 3.0f;
@@ -89,16 +94,15 @@ namespace SoundRender
     {
         ImGui::Text("Here is ModalSound Module");
         ImGui::Text("Mesh has %d vertices and %d triangles", mesh_render->vertices.size(), mesh_render->triangles.size());
-        ImGui::Text("Camera position:  (%f, %f, %f)", mesh_render->camera.Position.x, mesh_render->camera.Position.y, mesh_render->camera.Position.z);
+        ImGui::Text("Camera position:  (%f, %f, %f)", mesh_render->camera.Position.x * CamCorrection::scale, 
+                    mesh_render->camera.Position.y * CamCorrection::scale, mesh_render->camera.Position.z * CamCorrection::scale);
         ImGui::SliderFloat("Click Force", &force, 0.0f, 1.0f);
         ImGui::Text("Force: %f", force);
         ImGui::Text("Selected Triangle Index: %d", mesh_render->selectedTriangle);
-        ImGui::Text("Camera Zoom : %f",mesh_render->camera.Zoom);
-        float camR = mesh_render->camera.Position.length();
-        static float camposCoeff = camR / mesh_render->camera.Zoom;
-        
-        mesh_render->camera.Position *= camposCoeff * mesh_render->camera.Zoom / camR;
-        camposCoeff = camR / mesh_render->camera.Zoom;
+        float tanHalfFov = std::tan(glm::radians(mesh_render->camera.Zoom) / 2);
+        static float initTanHalfFov = tanHalfFov;
+        CamCorrection::scale = tanHalfFov / initTanHalfFov;
+        // ImGui::Text("fov : %f, %f, %f, %f", tanHalfFov, initTanHalfFov, CamCorrection::scale, mesh_render->camera.Zoom);
 
         // if click or space key is pressed
         if ((mesh_render->soundNeedsUpdate || ImGui::IsKeyPressed(GLFW_KEY_SPACE)) && mesh_render->selectedTriangle != -1)
@@ -215,10 +219,10 @@ namespace SoundRender
 
     float ModalSound::GetFFATFactor(ModalInfo &modalInfo)
     {
-        const float camx = mesh_render->camera.Position[0],
-                    camy = mesh_render->camera.Position[1],
-                    camz = mesh_render->camera.Position[2];
-        const float r = std::sqrt(camx * camx + camy * camy + camz * camz) + 1e-4f; // to prevent singular point.
+        auto campos = mesh_render->camera.Position * CamCorrection::scale;
+        const float camx = campos[0], camy = campos[1], camz = campos[2];
+
+        const float r = glm::length(campos) + 1e-4f; // to prevent singular point.
         const size_t ffatRowNum = modalInfo.ffat.size();
         const size_t ffatColNum = modalInfo.ffat[0].size();
         const float rowSampleIntervalRep = ffatRowNum / (2 * PI);
