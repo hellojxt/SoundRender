@@ -1,13 +1,12 @@
 #include "modal.h"
-#include <queue>
-#include <unordered_map>
-#include <mutex>
 #include <algorithm>
+
 namespace SoundRender
 {
-    namespace CamCorrection
+    namespace Correction
     {
-        float scale = 0.0f;
+        float camScale = 0.0f;
+        float soundScale = 0.0f;
     }
 
     float3 GetTriangleCenter(int3 tri, CArr<float3> &vertArr)
@@ -88,21 +87,21 @@ namespace SoundRender
         {
             select_voxel_vertex_idx[i] = -1;
         }
+        AdjustSoundScale();
     }
 
     void ModalSound::update()
     {
         ImGui::Text("Here is ModalSound Module");
         ImGui::Text("Mesh has %d vertices and %d triangles", mesh_render->vertices.size(), mesh_render->triangles.size());
-        ImGui::Text("Camera position:  (%f, %f, %f)", mesh_render->camera.Position.x * CamCorrection::scale, 
-                    mesh_render->camera.Position.y * CamCorrection::scale, mesh_render->camera.Position.z * CamCorrection::scale);
+        ImGui::Text("Camera position:  (%f, %f, %f)", mesh_render->camera.Position.x * Correction::camScale, 
+                    mesh_render->camera.Position.y * Correction::camScale, mesh_render->camera.Position.z * Correction::camScale);
         ImGui::SliderFloat("Click Force", &force, 0.0f, 1.0f);
         ImGui::Text("Force: %f", force);
         ImGui::Text("Selected Triangle Index: %d", mesh_render->selectedTriangle);
         float tanHalfFov = std::tan(glm::radians(mesh_render->camera.Zoom) / 2);
         static float initTanHalfFov = tanHalfFov;
-        CamCorrection::scale = tanHalfFov / initTanHalfFov;
-        // ImGui::Text("fov : %f, %f, %f, %f", tanHalfFov, initTanHalfFov, CamCorrection::scale, mesh_render->camera.Zoom);
+        Correction::camScale = tanHalfFov / initTanHalfFov;
 
         // if click or space key is pressed
         if ((mesh_render->soundNeedsUpdate || ImGui::IsKeyPressed(GLFW_KEY_SPACE)) && mesh_render->selectedTriangle != -1)
@@ -137,6 +136,69 @@ namespace SoundRender
         }
     }
 
+    void ModalSound::AdjustSoundScale()
+    {
+        float currMax = 0.0f;
+        float scale_factor = (2 * M_PI * 3000) * (2 * M_PI * 3000);
+        float tanHalfFov = std::tan(glm::radians(15.0f) / 2);
+        float tempScale = tanHalfFov / std::tan(glm::radians(45.0f) / 2);
+        std::vector<double> ffatFactors(modalInfos.size());       
+        for(int i = 0; i < ffatFactors.size(); i++)
+        {
+            double tempMax = 0.0f;
+            for(auto& row:modalInfos[i].ffat)
+            {
+                auto temp = std::max_element(row.begin(), row.end());
+                tempMax = std::max(*temp, tempMax);
+            }
+            ffatFactors[i] = tempMax / (4 * tempScale);
+        }
+        for(int materialID = 0; materialID < 8; materialID++)
+        {
+            SetMaterial(materialID);
+            for(int i = 0; i < mesh_render->triangles.size(); i++)
+            {
+                int3 tri = mesh_render->triangles[i];
+                select_point = GetTriangleCenter(tri, mesh_render->vertices);
+                auto norm = GetTriangleNormal(tri, mesh_render->vertices);
+                select_voxel_idx = GetNormalizedID(select_point);
+
+                for (int i = 0; i < 8; i++)
+                {
+                    auto offset = MaterialConst::offsets[i];
+                    auto id = vertData[select_voxel_idx.x + offset[0]][select_voxel_idx.y + offset[1]][select_voxel_idx.z + offset[2]] * 3;
+                    select_voxel_vertex_idx[i] = id;
+                    for (auto &modalInfo : modalInfos)
+                    {
+                        auto mode_f = modalInfo.eigenVec[id] * norm.x + modalInfo.eigenVec[id + 1] * norm.y + modalInfo.eigenVec[id + 2] * norm.z;
+                        modalInfo.f += mode_f * 1.0f / 8; // force_max = 1.0f;
+                    }
+                }
+
+                float result = 0.0f;
+                for (int i = 0; i < modalInfos.size(); i++)
+                {
+                    auto& modalInfo = modalInfos[i];
+                    float ffat_factor = ffatFactors[i] * 10000;
+                    float q1 = modalInfo.q1;
+                    float q2 = modalInfo.q2;
+                    float f = modalInfo.f;
+                    float c1 = modalInfo.coeff1;
+                    float c2 = modalInfo.coeff2;
+                    float c3 = modalInfo.coeff3;
+                    float q = c1 * q1 + c2 * q2 + c3 * f;
+                    modalInfo.f = 0;
+                    result += q * ffat_factor * scale_factor;
+                }
+                
+                if(result > currMax)
+                    currMax = result;
+            }
+        }
+        printf("%f\n",currMax);
+        Correction::soundScale = scale_factor / (currMax + 0.1f);
+    }
+    
     int3 ModalSound::GetNormalizedID(float3 center)
     {
         size_t voxelNum = voxelData.batchs - 1;
@@ -219,7 +281,7 @@ namespace SoundRender
 
     float ModalSound::GetFFATFactor(ModalInfo &modalInfo)
     {
-        auto campos = mesh_render->camera.Position * CamCorrection::scale;
+        auto campos = mesh_render->camera.Position * Correction::camScale;
         const float camx = campos[0], camy = campos[1], camz = campos[2];
 
         const float r = glm::length(campos) + 1e-4f; // to prevent singular point.

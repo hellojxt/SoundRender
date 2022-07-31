@@ -20,10 +20,10 @@ namespace SoundRender
         {
             title = "audio window";
             audio.init();
-            auto basename = filename.substr(filename.find("meshes/") + 7);
-            basename = basename.substr(0, basename.find("."));
-            auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") +  basename + std::string(".npz");
-            auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") +  basename + std::string(".npz");
+            auto pos1 = filename.rfind('/') + 1, pos2 = filename.rfind('.');
+            auto basename = filename.substr(pos1, pos2 - pos1);
+            auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + basename + std::string(".npz");
+            auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + basename + std::string(".npz");
             auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/") + basename + std::string(".npy");
             modal.init(eigenPath.c_str(), ffatPath.c_str(), voxelPath.c_str());
         }

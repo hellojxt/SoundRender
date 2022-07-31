@@ -8,6 +8,12 @@
 
 namespace SoundRender
 {
+    namespace Correction
+    {
+        extern float camScale;
+        extern float soundScale;
+    }
+
     namespace MaterialConst
     {
         // Caramic, Glass, Wood, Plastic, Iron, Polycarbonate, Steel, Tin.
@@ -59,8 +65,10 @@ namespace SoundRender
         int3 GetNormalizedID(float3 center);
         float GetFFATFactor(ModalInfo&);
         void SetMaterial(int chosenID);
+
     private:
         void FillModalInfos(cnpy::NpyArray &rawEigenValues, cnpy::NpyArray &rawEigenVecs, cnpy::NpyArray &rawFFAT);
         void FillVertID(cnpy::NpyArray &rawVoxelData);
+        void AdjustSoundScale();
     };
 }

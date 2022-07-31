@@ -75,23 +75,24 @@ namespace SoundRender
         ImGui::Text("delta_phase: %d", (int)(data.update_phase - left_phase));
         ImGui::Text("TABLE_SIZE: %d", TABLE_SIZE);
 
-        const char* items[] = { "Ceramic ", "Glass", "Wood", "Plastic", "Iron", "Polycarbonate", "Steel", "Tin"};
+        const char* items[] = { "Ceramic", "Glass", "Wood", "Plastic", "Iron", "Polycarbonate", "Steel", "Tin"};
         static int item_current_idx = 0; // Here we store our selection data as an index.
-        if (ImGui::BeginListBox("listbox 1"))
+        if (ImGui::BeginListBox("Material List:\n"))
         {
             for (int n = 0; n < IM_ARRAYSIZE(items); n++)
             {
                 const bool is_selected = (item_current_idx == n);
                 if (ImGui::Selectable(items[n], is_selected))
+                {
                     item_current_idx = n;
-
+                    modalSound->SetMaterial( item_current_idx );
+                }
                 // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                 if (is_selected)
                     ImGui::SetItemDefaultFocus();
             }
             ImGui::EndListBox();
         }
-        modalSound->SetMaterial( item_current_idx );
         int sample_num;
         if (last_phase == -1)
         {
@@ -105,7 +106,7 @@ namespace SoundRender
         }
         last_phase = left_phase;
 
-        float scale_factor = (2 * M_PI * 3000) * (2 * M_PI * 3000);
+        float scale_factor = Correction::soundScale;
         for (auto &modalInfo : modalSound->modalInfos)
         {
             float ffat_factor = modalSound->GetFFATFactor(modalInfo) * 10000;
