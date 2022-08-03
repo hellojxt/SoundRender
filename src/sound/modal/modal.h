@@ -5,6 +5,8 @@
 #include "cnpy.h"
 #include "helper_math.h"
 #include "array3D.h"
+#include <filesystem>
+#include <unordered_map>
 
 namespace SoundRender
 {
@@ -12,6 +14,7 @@ namespace SoundRender
     {
         extern float camScale;
         extern float soundScale;
+        extern std::unordered_map<std::string, float> allSoundScales;
     }
 
     namespace MaterialConst
@@ -51,7 +54,7 @@ namespace SoundRender
         int3 select_voxel_idx;
         int select_voxel_vertex_idx[8];
         bool click_current_frame;
-        void init(const char *eigenPath, const char *ffatPath, const char *voxelPath);
+        void init(const std::string& modalName);
 
         void link_mesh_render(MeshRender *mesh_render)
         {
@@ -65,7 +68,8 @@ namespace SoundRender
         int3 GetNormalizedID(float3 center);
         float GetFFATFactor(ModalInfo&);
         void SetMaterial(int chosenID);
-
+        void SetModal(const char *eigenPath, const char *ffatPath, const char *voxelPath);
+        static void PreprocessAllModals(const std::filesystem::path& meshRootPath, const std::filesystem::path& scaleFilePath);
     private:
         void FillModalInfos(cnpy::NpyArray &rawEigenValues, cnpy::NpyArray &rawEigenVecs, cnpy::NpyArray &rawFFAT);
         void FillVertID(cnpy::NpyArray &rawVoxelData);

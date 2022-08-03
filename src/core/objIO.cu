@@ -28,7 +28,7 @@ namespace SoundRender
 	{
 	}
 
-	inline Mesh loadOBJ(std::string file_name, bool log = false)
+	Mesh loadOBJ(std::string file_name, bool log)
 	{
 		CArr<float3> vertices;
 		CArr<int3> triangles;

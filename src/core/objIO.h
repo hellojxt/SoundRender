@@ -1,10 +1,12 @@
 #pragma once
+
 #include "array.h"
 #include <string>
 
 namespace SoundRender{
 
-    struct Mesh{
+    class Mesh{
+    public:
         CArr<float3> vertices;
         CArr<int3> triangles; 
         CArr<float3> normal;
@@ -14,8 +16,6 @@ namespace SoundRender{
         void writeOBJ(std::string filename);
     };
 
-    Mesh loadOBJ(const char* file_name);
+	Mesh loadOBJ(std::string file_name, bool log = false);
 
 }
-
-#include "objIO.inl"

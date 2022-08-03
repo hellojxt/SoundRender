@@ -17,6 +17,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/core
 add_subdirectory(libs)
 add_subdirectory(src)
 add_executable(main main.cu)
-target_link_libraries(main PUBLIC guilib audiolib modallib imgui cnpylib)
+target_link_libraries(main PUBLIC guilib audiolib modallib imgui cnpylib corelib)
 
 
