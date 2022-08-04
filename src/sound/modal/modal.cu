@@ -336,31 +336,31 @@ namespace SoundRender
         [[maybe_unused]] const auto AsciiWStrToStr = [](const std::wstring& wstr){ return std::string(wstr.begin(), wstr.end()); };
         for(const auto & entry : std::filesystem::directory_iterator(meshRootPath))
         {
-            auto mesh = loadOBJ(entry.path().c_str());
-            MeshRender render;
-            render.load_mesh(mesh.vertices, mesh.triangles);
-            ModalSound modal;
-            modal.link_mesh_render(&render);
-
         #ifdef _WIN32
             modalName = AsciiWStrToStr(entry.path().filename().replace_extension(L""));
         #else
             modalName = entry.path().filename().replace_extension("");
         #endif
-            std::cout << modalName << " ";
             if(Correction::allSoundScales.find(modalName) == Correction::allSoundScales.end())
             {
+                auto mesh = loadOBJ(entry.path().c_str());
+                MeshRender render;
+                render.load_mesh(mesh.vertices, mesh.triangles, mesh.vertex_texcoords, mesh.tex_triangles);
+                ModalSound modal;
+                modal.link_mesh_render(&render);
+
                 auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modalName + std::string(".npz");
                 auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modalName + std::string(".npz");
                 auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/") + modalName + std::string(".npy");
                 modal.SetModal(eigenPath.c_str(), ffatPath.c_str(), voxelPath.c_str());
                 modal.AdjustSoundScale();
                 Correction::allSoundScales.emplace(modalName, Correction::soundScale);
-                std::cout << modalName << " " << Correction::soundScale << "\n";
+                correctionFile << modalName << " " << Correction::soundScale << "\n";
             }
             ++preprocessedCnt;
             std::cerr << preprocessedCnt << " files have finished preproecessing.\r";
         }
+        std::cout << "\n";
         return;
     };
 }

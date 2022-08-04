@@ -3,15 +3,23 @@ out vec4 FragColor;
 #define NR_POINT_LIGHTS 3
 in vec3 Normal;  
 in vec3 FragPos;  
-in vec3 FragObjColor;
+in vec3 TexCoord;
+flat in int Flag;
 
 uniform vec3 lightPos[NR_POINT_LIGHTS];
 uniform vec3 viewPos; 
 uniform vec3 lightColor;
-
+uniform sampler2D Texture;
+uniform vec3 selectedColor;
 
 void main()
 {
+    vec3 objColor;
+    objColor = selectedColor;
+    // if(Flag == 1)
+    //   objColor = selectedColor;
+    // else
+    //   objColor = texture2D(Texture, vec2(TexCoord.s, 1.0 - TexCoord.t)).rgb;
     // ambient
     float ambientStrength = 0.2;
     vec3 ambient = ambientStrength * lightColor;
@@ -30,7 +38,7 @@ void main()
         vec3 reflectDir = reflect(-lightDir, norm);  
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
         vec3 specular = specularStrength * spec * lightColor;  
-        result += (diffuse + specular)*FragObjColor / NR_POINT_LIGHTS;
+        result += (diffuse + specular)*objColor / NR_POINT_LIGHTS;
     }
     FragColor = vec4(result, 1.0);
 } 

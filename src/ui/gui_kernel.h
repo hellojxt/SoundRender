@@ -5,7 +5,7 @@
 namespace SoundRender
 {
 
-    __global__ void mesh_preprocess(GArr<float3> vertices, GArr<int3> triangles, GArr<Triangle> GLdata)
+    __global__ void mesh_preprocess(GArr<float3> vertices, GArr<int3> triangles, GArr<float3> texVerts, GArr<int3> texTris, GArr<Triangle> GLdata)
     {
         int tri_id = threadIdx.x + blockIdx.x * blockDim.x;
         if (tri_id >= triangles.size())
@@ -20,6 +20,13 @@ namespace SoundRender
         data.n1 = normal;
         data.n2 = normal;
         data.n3 = normal;
+        if(tri_id < texTris.size())
+        {
+            int3 texTri = texTris[tri_id];
+            data.t1 = texVerts[texTri.x];
+            data.t2 = texVerts[texTri.y];
+            data.t3 = texVerts[texTri.z];
+        }
         data.flag1 = 0;
         data.flag2 = 0;
         data.flag3 = 0;

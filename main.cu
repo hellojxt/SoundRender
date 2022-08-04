@@ -34,7 +34,7 @@ int main()
     auto mesh = loadOBJ(filename, true);
     GUI gui;
     MeshRender render;
-    render.load_mesh(mesh.vertices, mesh.triangles);
+    render.load_mesh(mesh.vertices, mesh.triangles, mesh.vertex_texcoords, mesh.tex_triangles);
     gui.add_window(&render);
     AudioWindow audio_window(filename);
     audio_window.link_mesh_render(&render);
