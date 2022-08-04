@@ -1,0 +1,1 @@
+add_library(corelib objIO.cu)

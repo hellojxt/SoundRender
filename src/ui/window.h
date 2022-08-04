@@ -13,20 +13,26 @@
 #include "shader.h"
 #include "camera.h"
 #include "array.h"
+#include "objIO.h"
 
 namespace SoundRender
 {
+    // float3 texture is used for padding.
+    // Strictly, use alignof(...) to regulate is a more proper way.
     class Triangle
     {
     public:
         float3 v1;
         float3 n1;
+        float3 t1;
         int flag1;
         float3 v2;
         float3 n2;
+        float3 t2;
         int flag2;
         float3 v3;
         float3 n3;
+        float3 t3;
         int flag3;
     };
 
@@ -51,10 +57,13 @@ namespace SoundRender
         unsigned int textureColorbuffer;
         unsigned int rbo;
         unsigned int meshVAO, meshVBO;
+        unsigned int textureID;
         CArr<float3> vertices; 
         CArr<int3> triangles;
         GArr<float3> vertices_g;
         GArr<int3> triangles_g;
+        GArr<int3> textriangles_g;
+        GArr<float3> texverts_g;
         CArr<Triangle> meshData;
         GArr<Triangle> meshData_g;
         float3 bbox_min;
@@ -69,6 +78,12 @@ namespace SoundRender
         glm::mat4 camera_view;
         bool inDrag = false;
         float dragX = 0, dragY = 0;
+        glm::vec3 ambientCoeff;
+        glm::vec3 diffuseCoeff;
+        glm::vec3 specularCoeff;
+        float specularExp;
+        float alpha;
+        std::string texturePicName;
 
 #define OVERSAMPLE 2
 
@@ -90,7 +105,9 @@ namespace SoundRender
         // mouse middle button for camera rotation and zoom
         void event();
 
-        void load_mesh(CArr<float3> vertices, CArr<int3> triangles);
+        void load_mesh(CArr<float3> vertices_, CArr<int3> triangles_, CArr<float3> texverts_, CArr<int3> textris_);
+        void loadTexture(const char* path);
+        void SetShaderPara(Mesh& mesh);
 
         void updateMesh();
         void resetMesh();

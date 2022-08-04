@@ -1,34 +1,78 @@
 #include "window.h"
 #include "gui_kernel.h"
+#include "stb_image.h"
 #include <thrust/extrema.h>
 #include <thrust/execution_policy.h>
 
 namespace SoundRender
 {
+    void MeshRender::loadTexture(const char* path)
+    {
+        glGenTextures(1, &textureID);
+        int width, height, channels;
+        unsigned char* data = stbi_load(path, &width, &height, &channels, 0);
+        if(data == nullptr)
+        {
+            std::cout << "Texture failed to load at path : " << path << std::endl;
+            stbi_image_free(data);
+            textureID = 0;
+        }
+        GLenum format;
+        switch (channels)
+        {
+        case 1:
+            format = GL_RED;
+            break;
+        case 3:
+            format = GL_RGB;
+            break;
+        case 4:
+            format = GL_RGBA; 
+            break;
+        }
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        // glGenerateMipmap(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        stbi_image_free(data);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return;
+    }
+
 
     void MeshRender::init()
     {
+        std::string texturePath = std::string(ASSET_DIR) + std::string("/materials/") + texturePicName;
+        loadTexture(texturePath.c_str());
         glGenFramebuffers(1, &framebuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        glEnable(GL_TEXTURE_2D);
+        // glEnable(GL_TEXTURE_2D);
         glGenTextures(1, &textureColorbuffer);
         glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1000, 1000, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glBindTexture(GL_TEXTURE_2D, 0);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        
         glGenRenderbuffers(1, &rbo);
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1000, 1000);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             LOG_ERROR("Framebuffer not complete!")
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         shader.load(std::string(SHADER_DIR) + std::string("/mesh.vert"),
                     std::string(SHADER_DIR) + std::string("/mesh.frag"));
         shader.use();
+        shader.setInt("Texture", 0);
+        shader.setVec3("ambientCoeff", ambientCoeff);
+        shader.setVec3("diffuseCoeff", diffuseCoeff);
+        shader.setVec3("specularCoeff", specularCoeff);
+        shader.setFloat("specularExp", specularExp);
+        shader.setFloat("alpha", alpha);
     }
 
     void MeshRender::resize()
@@ -55,14 +99,17 @@ namespace SoundRender
         glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(Triangle) * meshData.size(), meshData.data(), GL_STATIC_DRAW);
         // position attribute
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float) + sizeof(int), (void *)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float) + sizeof(int), (void *)0);
         glEnableVertexAttribArray(0);
         // normal attribute
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float) + sizeof(int), (void *)(3 * sizeof(float)));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float) + sizeof(int), (void *)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
         // index attribute
-        glVertexAttribIPointer(2, 1, GL_INT, 6 * sizeof(float) + sizeof(int), (void *)(6 * sizeof(float)));
+        glVertexAttribIPointer(2, 1, GL_INT, 9 * sizeof(float) + sizeof(int), (void *)(9 * sizeof(float)));
         glEnableVertexAttribArray(2);
+        // texture attribute
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float) + sizeof(int), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(3);
     }
 
     void MeshRender::event()
@@ -139,7 +186,18 @@ namespace SoundRender
             }
         }
     }
-    void MeshRender::load_mesh(CArr<float3> vertices_, CArr<int3> triangles_)
+
+    void MeshRender::SetShaderPara(Mesh& mesh)
+    {
+        ambientCoeff = {mesh.ambientCoeff.x, mesh.ambientCoeff.y, mesh.ambientCoeff.z};
+        diffuseCoeff = {mesh.diffuseCoeff.x, mesh.diffuseCoeff.y, mesh.diffuseCoeff.z};
+        specularCoeff = {mesh.specularCoeff.x, mesh.specularCoeff.y, mesh.specularCoeff.z};
+        specularExp = mesh.specularExp;
+        alpha = mesh.alpha;
+        texturePicName = mesh.texturePicName;
+    }
+
+    void MeshRender::load_mesh(CArr<float3> vertices_, CArr<int3> triangles_, CArr<float3> texverts_, CArr<int3> textris_)
     {
         vertices = vertices_;
         triangles = triangles_;
@@ -167,8 +225,10 @@ namespace SoundRender
         bbox_max = make_float3(1.0f, 1.0f, 1.0f);
         vertices_g.assign(vertices);
         triangles_g.assign(triangles);
+        texverts_g.assign(texverts_);
+        textriangles_g.assign(textris_);
         meshData_g.resize(triangles_g.size());
-        cuExecuteBlock(triangles_g.size(), CUDA_BLOCK_SIZE, mesh_preprocess, vertices_g, triangles_g, meshData_g);
+        cuExecuteBlock(triangles_g.size(), CUDA_BLOCK_SIZE, mesh_preprocess, vertices_g, triangles_g, texverts_g, textriangles_g, meshData_g);
         meshData.assign(meshData_g);
         meshNeedsUpdate = true;
     }
@@ -176,7 +236,7 @@ namespace SoundRender
     void MeshRender::resetMesh()
     {
         meshData_g.resize(triangles_g.size());
-        cuExecuteBlock(triangles_g.size(), CUDA_BLOCK_SIZE, mesh_preprocess, vertices_g, triangles_g, meshData_g);
+        cuExecuteBlock(triangles_g.size(), CUDA_BLOCK_SIZE, mesh_preprocess, vertices_g, triangles_g, texverts_g, textriangles_g, meshData_g);
         meshData.assign(meshData_g);
         meshNeedsUpdate = true;
         if (selectedTriangle >= 0)
@@ -205,9 +265,10 @@ namespace SoundRender
         glClearColor(0.3f, 0.3f, 0.3f, 0.3f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shader.setVec3("objectColor", 0.5f, 0.5f, 0.31f);
+        // shader.setVec3("objectColor", 0.5f, 0.5f, 0.31f);
         shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
         shader.setVec3("selectedColor", 1.0f, 0.0f, 0.0f);
+
         for (int light_idx = 0; light_idx < pointLightPositions.size(); light_idx++)
         {
             shader.setVec3("lightPos[" + std::to_string(light_idx) + "]", pointLightPositions[light_idx]);
@@ -231,10 +292,12 @@ namespace SoundRender
 
         // render the mesh
         glBindVertexArray(meshVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID);
         glDrawArrays(GL_TRIANGLES, 0, 3 * meshData.size());
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST);
-        ImGui::Image((ImTextureID)(uintptr_t)framebuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image((ImTextureID)(uintptr_t)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         ImGui::EndChild();
     }
