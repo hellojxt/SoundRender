@@ -35,6 +35,7 @@ int main()
     GUI gui;
     MeshRender render;
     render.load_mesh(mesh.vertices, mesh.triangles, mesh.vertex_texcoords, mesh.tex_triangles);
+    render.SetShaderPara(mesh);
     gui.add_window(&render);
     AudioWindow audio_window(filename);
     audio_window.link_mesh_render(&render);

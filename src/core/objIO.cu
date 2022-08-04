@@ -43,9 +43,65 @@ namespace SoundRender
 	{
 	}
 
+    void Mesh::loadMaterial(const std::filesystem::path& fileName, const std::string& materialName)
+    {
+        std::string prefix;
+        std::ifstream fin(fileName.c_str());
+        if(!fin.is_open())
+            std::cout << "Fail to open mtl file : " << fileName.c_str() << "\n";
+        std::string currMtlName;
+        while(fin >> prefix)
+        {
+            if(prefix == "newmtl")
+            {
+                fin >> currMtlName;
+                if(currMtlName == materialName)
+                    break;
+            }
+        }
+        while (true)
+        {
+            fin >> prefix;
+			if(prefix == "newmtl" || !fin.good())
+                break;
+            else if(prefix == "Ns")
+            {
+                fin >> specularExp;
+            }
+            else if(prefix == "Ka")
+            {
+                fin >> ambientCoeff.x >> ambientCoeff.y >> ambientCoeff.z;
+            }
+            else if(prefix == "Kd")
+            {
+                fin >> diffuseCoeff.x >> diffuseCoeff.y >> diffuseCoeff.z;
+            }
+            else if(prefix == "Ks")
+            {
+                fin >> specularCoeff.x >> specularCoeff.y >> specularCoeff.z;
+            }
+            else if(prefix == "d")
+            {
+                fin >> alpha;
+            }
+			else if(prefix == "map_Kd")
+			{
+				fin >> texturePicName;
+			}
+        }
+        return;
+    }
+
+
 	Mesh loadOBJ(std::string file_name, bool log)
 	{
-		// std::ofstream fout("/home/jiaming/Self/output/temp2.txt", std::ios::trunc);
+		std::filesystem::path assetPath{ASSET_DIR};
+		#ifdef _WIN32
+			assetPath /= L"materials";
+		#else
+			assetPath /= "materials";
+		#endif
+
 		CArr<float3> vertices;
 		CArr<int3> triangles;
 		CArr<int3> tex_triangles;
@@ -63,6 +119,8 @@ namespace SoundRender
 			exit(1);
 		}
 
+		std::string mtlLibName;
+		std::string materialName;
 		// Read one line at a time
 		while (std::getline(in_file, line))
 		{
@@ -80,8 +138,13 @@ namespace SoundRender
 			else if (prefix == "s")
 			{
 			}
-			else if (prefix == "use_mtl")
+			else if (prefix == "usemtl")
 			{
+				ss >> materialName;
+			}
+			else if(prefix == "mtllib")
+			{
+				ss >> mtlLibName;
 			}
 			else if (prefix == "v") // Vertex position
 			{
@@ -161,9 +224,9 @@ namespace SoundRender
 			std::cout << "OBJ file:" << file_name << " loaded!"
 					  << "\n";
 		}
-		if(vertex_texcoords.isEmpty())
-			return Mesh(vertices, triangles);
-		return Mesh(vertices, triangles, vertex_texcoords, tex_triangles);
+		Mesh mesh = vertex_texcoords.isEmpty()? Mesh(vertices, triangles) : Mesh(vertices, triangles, vertex_texcoords, tex_triangles);
+		mesh.loadMaterial(assetPath / mtlLibName, materialName);
+		return mesh;
 	}
 
 }

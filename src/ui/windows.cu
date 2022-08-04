@@ -43,7 +43,8 @@ namespace SoundRender
 
     void MeshRender::init()
     {
-        loadTexture("/home/jiaming/SoundRender/src/ui/wood.jpg");
+        std::string texturePath = std::string(ASSET_DIR) + std::string("/materials/") + texturePicName;
+        loadTexture(texturePath.c_str());
         glGenFramebuffers(1, &framebuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         // glEnable(GL_TEXTURE_2D);
@@ -67,6 +68,11 @@ namespace SoundRender
                     std::string(SHADER_DIR) + std::string("/mesh.frag"));
         shader.use();
         shader.setInt("Texture", 0);
+        shader.setVec3("ambientCoeff", ambientCoeff);
+        shader.setVec3("diffuseCoeff", diffuseCoeff);
+        shader.setVec3("specularCoeff", specularCoeff);
+        shader.setFloat("specularExp", specularExp);
+        shader.setFloat("alpha", alpha);
     }
 
     void MeshRender::resize()
@@ -180,6 +186,17 @@ namespace SoundRender
             }
         }
     }
+
+    void MeshRender::SetShaderPara(Mesh& mesh)
+    {
+        ambientCoeff = {mesh.ambientCoeff.x, mesh.ambientCoeff.y, mesh.ambientCoeff.z};
+        diffuseCoeff = {mesh.diffuseCoeff.x, mesh.diffuseCoeff.y, mesh.diffuseCoeff.z};
+        specularCoeff = {mesh.specularCoeff.x, mesh.specularCoeff.y, mesh.specularCoeff.z};
+        specularExp = mesh.specularExp;
+        alpha = mesh.alpha;
+        texturePicName = mesh.texturePicName;
+    }
+
     void MeshRender::load_mesh(CArr<float3> vertices_, CArr<int3> triangles_, CArr<float3> texverts_, CArr<int3> textris_)
     {
         vertices = vertices_;
@@ -280,7 +297,7 @@ namespace SoundRender
         glDrawArrays(GL_TRIANGLES, 0, 3 * meshData.size());
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST);
-        ImGui::Image((ImTextureID)(uintptr_t)framebuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image((ImTextureID)(uintptr_t)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         ImGui::EndChild();
     }
