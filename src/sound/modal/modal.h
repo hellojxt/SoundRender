@@ -5,7 +5,7 @@
 #include "cnpy.h"
 #include "helper_math.h"
 #include "array3D.h"
-
+#define M_PI (3.1415926)
 namespace SoundRender
 {
     namespace Correction

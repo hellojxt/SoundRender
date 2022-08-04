@@ -1,8 +1,10 @@
 #include "audio.h"
 
+
 namespace SoundRender
 {
     
+
     static int patestCallback(const void *inputBuffer, void *outputBuffer,
                               unsigned long framesPerBuffer,
                               const PaStreamCallbackTimeInfo *timeInfo,
@@ -75,7 +77,7 @@ namespace SoundRender
         ImGui::Text("delta_phase: %d", (int)(data.update_phase - left_phase));
         ImGui::Text("TABLE_SIZE: %d", TABLE_SIZE);
 
-        const char* items[] = { "Ceramic", "Glass", "Wood", "Plastic", "Iron", "Polycarbonate", "Steel", "Tin"};
+        const char *items[] = {"Ceramic", "Glass", "Wood", "Plastic", "Iron", "Polycarbonate", "Steel", "Tin"};
         static int item_current_idx = 0; // Here we store our selection data as an index.
         if (ImGui::BeginListBox("Material List:\n"))
         {
@@ -85,7 +87,7 @@ namespace SoundRender
                 if (ImGui::Selectable(items[n], is_selected))
                 {
                     item_current_idx = n;
-                    modalSound->SetMaterial( item_current_idx );
+                    modalSound->SetMaterial(item_current_idx);
                 }
                 // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                 if (is_selected)
@@ -93,6 +95,7 @@ namespace SoundRender
             }
             ImGui::EndListBox();
         }
+
         int sample_num;
         if (last_phase == -1)
         {
@@ -136,13 +139,75 @@ namespace SoundRender
             }
             modalSound->click_current_frame = false;
         }
+        data.update_phase = data.update_phase + sample_num;
+
+        // plot the sound wave
         if (ImPlot::BeginPlot("Audio Click Signal"))
         {
             ImPlot::PlotLine("signal", signalPlotData.x, signalPlotData.y, signalPlotData.size);
             ImPlot::EndPlot();
         }
+        //end of plotting sound wave
 
-        data.update_phase = data.update_phase + sample_num;
+        // plot the FFAT map
+        static ImPlotColormap map = ImPlotColormap_Viridis;
+        ImPlot::PushColormap(map);
+        static int modal_index = 0;
+        ImGui::SliderInt("modal index", &modal_index, 0, 19);
+ 
+        // const int plotRowNum = (int)modalSound->modalInfos[0].ffat.size();
+        // const int plotColNum = (int)modalSound->modalInfos[0].ffat[0].size();
+        // static double values[RowNum][ColNum];
+        const int plotRowNum = 64, plotColNum = 32;
+        static double values[plotRowNum][plotColNum];
+
+        //get current theta & phi , which correspond with current row & col in ffat map 
+        auto campos = modalSound->mesh_render->camera.Position * Correction::camScale;
+        const float camx = campos[0], camy = campos[1], camz = campos[2];
+
+        const float r = glm::length(campos) + 1e-4f; // to prevent singular point.
+        const size_t ffatRowNum = modalSound->modalInfos[0].ffat.size();
+        const size_t ffatColNum = modalSound->modalInfos[0].ffat[0].size();
+        const float rowSampleIntervalRep = ffatRowNum / (2 * PI);
+        const float colSampleIntervalRep = ffatColNum / PI;
+
+        float theta = std::acos(camz / r);
+        float phi = camy <= 1e-5f && camx <= 1e-5f && camx >= -1e-5f && camy >= -1e-5f ? 0.0f : std::fmod(std::atan2(camy, camx) + 2 * PI, 2 * PI);
+
+        float colInter = theta * colSampleIntervalRep, rowInter = phi * rowSampleIntervalRep;
+        int col = static_cast<int>(colInter);
+        int row = static_cast<int>(rowInter);
+
+        int ffat_i=0,ffat_j=0;
+        for (int i = 0; i < plotRowNum; i++)
+        {
+            for (int j = 0; j < plotColNum; j++)
+            {
+                //always put the coordinate (theta,phi) in the center of the FFAT map
+                ffat_i=(i+plotRowNum/2-row+plotRowNum)%plotRowNum;
+                ffat_j=(j+plotColNum/2-col+plotColNum)%plotColNum;
+                values[i][j] = modalSound->modalInfos[modal_index].ffat[ffat_i][ffat_j];
+            }
+        }
+
+        static float scale_min = 0;
+        static float scale_max = 0.001f;
+        ImGui::SetNextItemWidth(225);
+        ImGui::DragFloatRange2("Min / Max", &scale_min, &scale_max, 0.001f, 0, 1);
+
+        if (ImPlot::BeginPlot("##Heatmap",ImVec2(225,450)))
+        {
+          
+            ImPlot::SetupAxes(NULL, NULL, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations);
+            ImPlot::PlotHeatmap("ffat map", values[0],plotRowNum, plotColNum, scale_min, scale_max, NULL);
+            ImPlot::EndPlot();
+        }
+        ImGui::SameLine();
+        ImPlot::ColormapScale("##HeatScale", scale_min, scale_max, ImVec2(60, 225));
+        ImPlot::PopColormap();
+        //end of plotting FFAT map
+
+
     }
 
     void AudioWapper::close()
