@@ -40,11 +40,21 @@ namespace SoundRender
         return;
     }
 
+    void MeshRender::Prepare(std::string mtlLibName)
+    {
+        mtlLib = mtlLibName;
+        return;
+    }
 
     void MeshRender::init()
     {
-        std::string texturePath = std::string(ASSET_DIR) + std::string("/materials/") + texturePicName;
-        loadTexture(texturePath.c_str());
+        material = loadMaterial(std::string(ASSET_DIR) + std::string("/materials/") + mtlLib, "Ceramic_Glazed");
+        bool useTexture = material.texturePicName.length() != 0;
+        if(useTexture)
+        {
+            std::string texturePath = std::string(ASSET_DIR) + std::string("/materials/") + material.texturePicName;
+            loadTexture(texturePath.c_str());
+        }
         glGenFramebuffers(1, &framebuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         // glEnable(GL_TEXTURE_2D);
@@ -68,11 +78,12 @@ namespace SoundRender
                     std::string(SHADER_DIR) + std::string("/mesh.frag"));
         shader.use();
         shader.setInt("Texture", 0);
-        shader.setVec3("ambientCoeff", ambientCoeff);
-        shader.setVec3("diffuseCoeff", diffuseCoeff);
-        shader.setVec3("specularCoeff", specularCoeff);
-        shader.setFloat("specularExp", specularExp);
-        shader.setFloat("alpha", alpha);
+        shader.setVec3("ambientCoeff", material.ambientCoeff.x, material.ambientCoeff.y, material.ambientCoeff.z);
+        shader.setVec3("diffuseCoeff", material.diffuseCoeff.x, material.diffuseCoeff.y, material.diffuseCoeff.z);
+        shader.setVec3("specularCoeff", material.specularCoeff.x, material.specularCoeff.y, material.specularCoeff.z);
+        shader.setFloat("specularExp", material.specularExp);
+        shader.setFloat("alpha", material.alpha);
+        shader.setInt("useTexture", (int)useTexture);
     }
 
     void MeshRender::resize()
@@ -187,16 +198,6 @@ namespace SoundRender
         }
     }
 
-    void MeshRender::SetShaderPara(Mesh& mesh)
-    {
-        ambientCoeff = {mesh.ambientCoeff.x, mesh.ambientCoeff.y, mesh.ambientCoeff.z};
-        diffuseCoeff = {mesh.diffuseCoeff.x, mesh.diffuseCoeff.y, mesh.diffuseCoeff.z};
-        specularCoeff = {mesh.specularCoeff.x, mesh.specularCoeff.y, mesh.specularCoeff.z};
-        specularExp = mesh.specularExp;
-        alpha = mesh.alpha;
-        texturePicName = mesh.texturePicName;
-    }
-
     void MeshRender::load_mesh(CArr<float3> vertices_, CArr<int3> triangles_, CArr<float3> texverts_, CArr<int3> textris_)
     {
         vertices = vertices_;
@@ -261,7 +262,28 @@ namespace SoundRender
         float tx = wsize.x * OVERSAMPLE, ty = wsize.y * OVERSAMPLE;
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glViewport(0, 0, tx, ty);
-        glEnable(GL_DEPTH_TEST);
+        struct AlphaTest
+        {
+            int id;
+            float dis;
+            bool operator<(const AlphaTest& t2)const {return dis < t2.dis;}
+        };
+        std::vector<AlphaTest> v(triangles.size());
+        for(int i = 0; i < v.size(); i++)
+        {
+            v[i].id = i;
+            auto temp = (vertices[triangles[i].x] + vertices[triangles[i].y] + vertices[triangles[i].z]) / 3;
+            v[i].dis = glm::length(camera.Position - glm::vec3{temp.x, temp.y, temp.z});
+        }
+        std::set<AlphaTest> sortedArray(v.begin(), v.end());
+        if(material.alpha < 0.99)
+        {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glDisable(GL_DEPTH_TEST);
+        }
+        else
+            glEnable(GL_DEPTH_TEST);
         glClearColor(0.3f, 0.3f, 0.3f, 0.3f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -294,12 +316,42 @@ namespace SoundRender
         glBindVertexArray(meshVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glDrawArrays(GL_TRIANGLES, 0, 3 * meshData.size());
+        if(material.alpha < 0.99)
+        {
+            for(auto& it: sortedArray)
+            {
+                glDrawArrays(GL_TRIANGLES, it.id * 3, 3);
+            }
+        }
+        else
+            glDrawArrays(GL_TRIANGLES, 0, 3 * meshData.size());
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST);
         ImGui::Image((ImTextureID)(uintptr_t)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         ImGui::EndChild();
+    }
+
+    void MeshRender::changeMaterial(int chosenID)
+    {
+        // const char* items[] = { "Ceramic", "Glass", "Wood", "Plastic", "Iron", "Polycarbonate", "Steel", "Tin"};
+        const char* materialNames[] = { "Ceramic_Glazed", "Glass_Simple", "Bright_tiles_square", "Plastic_Shader", "Rough_Iron_Steel", "Polycarbonate", "Stainless_Steel", "wet_aluminium"};
+        material = loadMaterial(std::string(ASSET_DIR) + std::string("/materials/") + mtlLib, materialNames[chosenID]);
+        bool useTexture = material.texturePicName.length() != 0;
+        if(useTexture)
+        {
+            std::string texturePath = std::string(ASSET_DIR) + std::string("/materials/") + material.texturePicName;
+            loadTexture(texturePath.c_str());
+        }
+        std::cout <<material.ambientCoeff.x << " " << material.ambientCoeff.y<< " " << material.ambientCoeff.z<<"\n";
+        shader.setVec3("ambientCoeff", material.ambientCoeff.x, material.ambientCoeff.y, material.ambientCoeff.z);
+        shader.setVec3("diffuseCoeff", material.diffuseCoeff.x, material.diffuseCoeff.y, material.diffuseCoeff.z);
+        shader.setVec3("specularCoeff", material.specularCoeff.x, material.specularCoeff.y, material.specularCoeff.z);
+        shader.setFloat("specularExp", material.specularExp);
+        shader.setFloat("alpha", material.alpha);
+        shader.setInt("useTexture", (int)useTexture);
+        std::cout << material.alpha << "\n";
+        return;
     }
 
 } // namespace  SoundRender

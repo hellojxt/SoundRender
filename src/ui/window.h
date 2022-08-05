@@ -78,12 +78,8 @@ namespace SoundRender
         glm::mat4 camera_view;
         bool inDrag = false;
         float dragX = 0, dragY = 0;
-        glm::vec3 ambientCoeff;
-        glm::vec3 diffuseCoeff;
-        glm::vec3 specularCoeff;
-        float specularExp;
-        float alpha;
-        std::string texturePicName;
+        Material material;
+        std::string mtlLib;
 
 #define OVERSAMPLE 2
 
@@ -107,10 +103,11 @@ namespace SoundRender
 
         void load_mesh(CArr<float3> vertices_, CArr<int3> triangles_, CArr<float3> texverts_, CArr<int3> textris_);
         void loadTexture(const char* path);
-        void SetShaderPara(Mesh& mesh);
+        void Prepare(std::string mtlLibName);
 
         void updateMesh();
         void resetMesh();
+        void changeMaterial(int chosenID);
 
         void update();
 
