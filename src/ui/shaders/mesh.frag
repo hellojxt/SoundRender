@@ -17,17 +17,20 @@ uniform vec3 diffuseCoeff;
 uniform vec3 specularCoeff;
 uniform float specularExp;
 uniform float alpha;
+uniform int useTexture;
 
 void main()
 {
     vec3 objColor;
     if(Flag == 1)
       objColor = selectedColor;
-    else
+    else if(useTexture == 1)
       objColor = texture2D(Texture, vec2(TexCoord.s, 1.0 - TexCoord.t)).rgb;
+    else
+      objColor = vec3(1.0, 1.0, 1.0);
     // ambient
     // float ambientStrength = 0.2;
-    vec3 ambient = 0.2 * lightColor;
+    vec3 ambient = ambientCoeff * lightColor;
   	vec3 result = ambient;
     for (int i = 0; i < NR_POINT_LIGHTS; i++)
     {

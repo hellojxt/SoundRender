@@ -68,13 +68,13 @@ namespace SoundRender
         return;
     };
 
-    void ModalSound::init(const std::string& modalName)
+    void ModalSound::init(const std::string& modelName)
     {
-        auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modalName + std::string(".npz");
-        auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modalName + std::string(".npz");
-        auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/") + modalName + std::string(".npy");
+        auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modelName + std::string(".npz");
+        auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modelName + std::string(".npz");
+        auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/") + modelName + std::string(".npy");
         SetModal(eigenPath.c_str(), ffatPath.c_str(), voxelPath.c_str());
-        Correction::soundScale = Correction::allSoundScales[modalName];
+        Correction::soundScale = Correction::allSoundScales[modelName];
         return;
     }
 
@@ -258,6 +258,7 @@ namespace SoundRender
     {
         for(auto& modalInfo : modalInfos)
             modalInfo.SetMaterial(chosenID);
+        mesh_render->changeMaterial(chosenID);
         return;
     }
 
@@ -308,8 +309,19 @@ namespace SoundRender
         float colInter = theta * colSampleIntervalRep, rowInter = phi * rowSampleIntervalRep;
         int col = static_cast<int>(colInter);
         float colFrac = colInter - static_cast<float>(col);
+        if(col < 0 || col > ffatColNum)
+        {
+            col = 0;
+            colFrac = 0;
+        }
         int row = static_cast<int>(rowInter);
         float rowFrac = rowInter - static_cast<float>(row);
+        if(row < 0 || row > ffatRowNum)
+        {
+            row = 0;
+            rowFrac = 0;
+        }
+        // std::cout << row << " " << row + 1 << " " << col << " " << col + 1 << "\n";
         // bi-Lerp.
         int nextRow = (row + 1) % ffatRowNum, nextCol = (col + 1) % ffatColNum;
         float interResult = Lerp(Lerp(modalInfo.ffat[row][col], modalInfo.ffat[nextRow][col], rowFrac),
@@ -325,11 +337,11 @@ namespace SoundRender
         std::cout << "Totally " << cnt << " files in /meshes.\n";
 
         std::fstream correctionFile(scaleFilePath, std::ios::in | std::ios::out | std::ios::app);
-        std::string modalName;
+        std::string modelName;
         float modalScale;
-        while(correctionFile >> modalName >> modalScale)
+        while(correctionFile >> modelName >> modalScale)
         {
-            Correction::allSoundScales.emplace(modalName, modalScale);
+            Correction::allSoundScales.emplace(modelName, modalScale);
         };
         correctionFile.clear();
 
@@ -337,25 +349,33 @@ namespace SoundRender
         for(const auto & entry : std::filesystem::directory_iterator(meshRootPath))
         {
         #ifdef _WIN32
-            modalName = AsciiWStrToStr(entry.path().filename().replace_extension(L""));
+            auto tempName = entry.path().filename().replace_extension(L"");
+            modelName = AsciiWStrToStr(temp.c_str());
         #else
-            modalName = entry.path().filename().replace_extension("");
+            modelName = entry.path().filename().replace_extension("");
         #endif
-            if(Correction::allSoundScales.find(modalName) == Correction::allSoundScales.end())
+            if(Correction::allSoundScales.find(modelName) == Correction::allSoundScales.end())
             {
-                auto mesh = loadOBJ(entry.path().c_str());
+                #ifdef _WIN32
+                    auto tempPath = entry.path().wstring();
+                    auto meshPath = AsciiWStrToStr(tempPath);
+                #else
+                    auto tempPath = entry.path();
+                    auto meshPath = tempPath.string();
+                #endif
+                auto mesh = loadOBJ(meshPath);
                 MeshRender render;
                 render.load_mesh(mesh.vertices, mesh.triangles, mesh.vertex_texcoords, mesh.tex_triangles);
                 ModalSound modal;
                 modal.link_mesh_render(&render);
 
-                auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modalName + std::string(".npz");
-                auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modalName + std::string(".npz");
-                auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/") + modalName + std::string(".npy");
+                auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modelName + std::string(".npz");
+                auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modelName + std::string(".npz");
+                auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/") + modelName + std::string(".npy");
                 modal.SetModal(eigenPath.c_str(), ffatPath.c_str(), voxelPath.c_str());
                 modal.AdjustSoundScale();
-                Correction::allSoundScales.emplace(modalName, Correction::soundScale);
-                correctionFile << modalName << " " << Correction::soundScale << "\n";
+                Correction::allSoundScales.emplace(modelName, Correction::soundScale);
+                correctionFile << modelName << " " << Correction::soundScale << "\n";
             }
             ++preprocessedCnt;
             std::cerr << preprocessedCnt << " files have finished preproecessing.\r";
