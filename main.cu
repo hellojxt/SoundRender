@@ -5,26 +5,16 @@
 #include <math.h>
 #include <filesystem>
 using namespace SoundRender;
-
 void Preprocess()
 {
-#ifdef _WIN32
-    const wchar_t* meshRelaPath = L"asset/meshes";
-    const wchar_t* correctionRelaPath = L"asset/correction";
-    const wchar_t* fileName = L"correction.txt";
-#else
-    const char* meshRelaPath = "asset/meshes";
-    const char* correctionRelaPath = "asset/correction";
-    const char* fileName = "correction.txt";
-#endif
-
-    const auto rootPath =  std::filesystem::current_path().parent_path();
-    const auto meshPath = rootPath / meshRelaPath;
-    const auto correctionPath = rootPath / correctionRelaPath;
-    if(!std::filesystem::exists(correctionPath))
-        std::filesystem::create_directory(correctionPath);
-    ModalSound::PreprocessAllModals(meshPath, correctionPath / fileName);    
-    return;
+ const std::string fileName = "/correction.txt";
+ std::string assetPath{ ASSET_DIR };
+ std::string meshPath = std::string(ASSET_DIR) + "/meshes";
+ std::string correctionPath = std::string(ASSET_DIR) + "/correction";
+ if (!std::filesystem::exists(correctionPath))
+  std::filesystem::create_directory(correctionPath);
+ ModalSound::PreprocessAllModals(meshPath, correctionPath + fileName);
+ return;
 }
 
 int main()

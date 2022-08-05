@@ -350,7 +350,7 @@ namespace SoundRender
         {
         #ifdef _WIN32
             auto tempName = entry.path().filename().replace_extension(L"");
-            modelName = AsciiWStrToStr(temp.c_str());
+            modelName = AsciiWStrToStr(tempName.c_str());
         #else
             modelName = entry.path().filename().replace_extension("");
         #endif
