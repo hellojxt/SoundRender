@@ -14,7 +14,6 @@ namespace SoundRender{
 		CArr<float3> vertex_texcoords;
         CArr<float3> normal;
         CArr<int3> norm_triangles;
-        std::string mtlLibName;
         Mesh(CArr<float3> vertices_, CArr<int3> triangles_);
         Mesh(CArr<float3> vertices_, CArr<int3> triangles_, CArr<float3> normal_);
         Mesh(CArr<float3> vertices_, CArr<int3> triangles_, CArr<float3> tex_, CArr<int3> tex_triangles_);

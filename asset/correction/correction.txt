@@ -1,1 +1,6 @@
-plate 1.2265e+07
+bunny 3.24608e+06
+glass 1.59951e+06
+cup 652469
+plate 1.83638e+06
+forkliftBucket 4.75004e+06
+bowl 9.5894e+06

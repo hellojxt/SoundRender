@@ -28,6 +28,7 @@ namespace SoundRender
         constexpr float timestep = 1.0f / 44100;
         constexpr int offsets[][3] = {
             {0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}};
+        const std::string mtlLibName = "plate.mtl";
     };
 
     class ModalInfo
@@ -66,11 +67,12 @@ namespace SoundRender
 
         void update();
         std::vector<ModalInfo> modalInfos;
+        float preprocessTime;
         CArr3D<int> vertData;
         CArr3D<int> voxelData;
         int3 GetNormalizedID(float3 center);
         float GetFFATFactor(ModalInfo&);
-        void SetMaterial(int chosenID);
+        void SetMaterial(int chosenID, bool needShade);
         void SetModal(const char *eigenPath, const char *ffatPath, const char *voxelPath);
         static void PreprocessAllModals(const std::filesystem::path& meshRootPath, const std::filesystem::path& scaleFilePath);
     private:

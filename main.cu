@@ -7,14 +7,14 @@
 using namespace SoundRender;
 void Preprocess()
 {
- const std::string fileName = "/correction.txt";
- std::string assetPath{ ASSET_DIR };
- std::string meshPath = std::string(ASSET_DIR) + "/meshes";
- std::string correctionPath = std::string(ASSET_DIR) + "/correction";
- if (!std::filesystem::exists(correctionPath))
-  std::filesystem::create_directory(correctionPath);
-//  ModalSound::PreprocessAllModals(meshPath, correctionPath + fileName);
- return;
+    const std::string fileName = "/correction.txt";
+    std::string assetPath{ ASSET_DIR };
+    std::string meshPath = std::string(ASSET_DIR) + "/meshes";
+    std::string correctionPath = std::string(ASSET_DIR) + "/correction";
+    if (!std::filesystem::exists(correctionPath))
+      std::filesystem::create_directory(correctionPath);
+    ModalSound::PreprocessAllModals(meshPath, correctionPath + fileName);
+    return;
 }
 
 int main()

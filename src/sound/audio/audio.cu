@@ -90,7 +90,7 @@ namespace SoundRender
                     {
                         item_current_idx = n;
                         modalSound->init(modalSound->filename, item_current_idx);
-                        modalSound->SetMaterial(item_current_idx);
+                        modalSound->SetMaterial(item_current_idx, true);
                     }
                     
                 }
@@ -115,40 +115,37 @@ namespace SoundRender
         }
         last_phase = left_phase;
 
-        TICK(signal)
-        LOG(sample_num)
-        float scale_factor = 10000000000;// Correction::soundScale;
-        for (auto &modalInfo : modalSound->modalInfos)
-        {
-            float ffat_factor = modalSound->GetFFATFactor(modalInfo) * 10000;
-            float q1 = modalInfo.q1;
-            float q2 = modalInfo.q2;
-            float f = modalInfo.f;
-            float c1 = modalInfo.coeff1;
-            float c2 = modalInfo.coeff2;
-            float c3 = modalInfo.coeff3;
-            LOG(q1 <<" "<< q2)
-            if (abs(q1* ffat_factor * scale_factor) < 1e-3 && abs(q2* ffat_factor * scale_factor) < 1e-3 && f < 1e-3)
-            {
-                continue;
-            }
-
-            for (int i = 0; i < sample_num; i++)
-            {
-                float q = c1 * q1 + c2 * q2 + c3 * f;
-                q2 = q1;
-                q1 = q;
-                f = f * 0.1;
-                data.signal[(data.update_phase + i) % TABLE_SIZE] += q * ffat_factor * scale_factor;
-            }
-            modalInfo.q1 = q1;
-            modalInfo.q2 = q2;
-            modalInfo.f = f;
-        }
-        TOCK(signal)
-
         if (modalSound->click_current_frame)
         {
+            float scale_factor = Correction::soundScale;
+            for (auto &modalInfo : modalSound->modalInfos)
+            {
+                float ffat_factor = modalSound->GetFFATFactor(modalInfo) * 10000;
+                float q1 = modalInfo.q1;
+                float q2 = modalInfo.q2;
+                float f = modalInfo.f;
+                float c1 = modalInfo.coeff1;
+                float c2 = modalInfo.coeff2;
+                float c3 = modalInfo.coeff3;
+                // LOG(q1 <<" "<< q2)
+                if (abs(q1 * ffat_factor * scale_factor) < 1e-3 && abs(q2 * ffat_factor * scale_factor) < 1e-3 && f < 1e-3)
+                {
+                    continue;
+                }
+
+                for (int i = 0; i < sample_num; i++)
+                {
+                    float q = c1 * q1 + c2 * q2 + c3 * f;
+                    q2 = q1;
+                    q1 = q;
+                    f = f * 0.1;
+                    data.signal[(data.update_phase + i) % TABLE_SIZE] += q * ffat_factor * scale_factor;
+                }
+                modalInfo.q1 = q1;
+                modalInfo.q2 = q2;
+                modalInfo.f = f;
+            }
+
             for (int i = 0; i < signalPlotData.size; i++)
             {
                 signalPlotData.y[i] = data.signal[(data.update_phase + i - 100) % TABLE_SIZE];

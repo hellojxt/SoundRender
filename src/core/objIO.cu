@@ -116,8 +116,6 @@ namespace SoundRender
 			exit(1);
 		}
 
-		// Read one line at a time
-		std::string mtlLibName;
 		while (std::getline(in_file, line))
 		{
 			// Get the prefix of the line
@@ -139,7 +137,6 @@ namespace SoundRender
 			}
 			else if(prefix == "mtllib")
 			{
-				ss >> mtlLibName;
 			}
 			else if (prefix == "v") // Vertex position
 			{
@@ -220,7 +217,6 @@ namespace SoundRender
 					  << "\n";
 		}
 		Mesh mesh = vertex_texcoords.isEmpty()? Mesh(vertices, triangles) : Mesh(vertices, triangles, vertex_texcoords, tex_triangles);
-		mesh.mtlLibName = mtlLibName;
 		return mesh;
 	}
 

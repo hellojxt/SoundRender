@@ -35,17 +35,18 @@ namespace SoundRender
         {
             auto filename = filename_lst[select_object_idx];
             LOG("filename: " << filename);
-            modal.init(filename, 0);
-            audio.init();
             auto mesh = loadOBJ(filename, true);
             modal.mesh_render->load_mesh(mesh.vertices, mesh.triangles, mesh.vertex_texcoords, mesh.tex_triangles);
-            modal.mesh_render->Prepare(mesh.mtlLibName);
+
+            modal.init(filename, 0);
+            audio.init();
         }
 
         void link_mesh_render(MeshRender *mesh)
         {
             modal.link_mesh_render(mesh);
             audio.link_modal(&modal);
+            modal.mesh_render->Prepare(MaterialConst::mtlLibName);
         }
 
         void update()
