@@ -77,17 +77,22 @@ namespace SoundRender
         ImGui::Text("delta_phase: %d", (int)(data.update_phase - left_phase));
         ImGui::Text("TABLE_SIZE: %d", TABLE_SIZE);
 
-        const char *items[] = {"Ceramic", "Glass", "Wood", "Plastic", "Iron", "Polycarbonate", "Steel", "Tin"};
+
         static int item_current_idx = 0; // Here we store our selection data as an index.
         if (ImGui::BeginListBox("Material List:\n"))
         {
-            for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+            for (int n = 0; n < IM_ARRAYSIZE(MaterialConst::names); n++)
             {
                 const bool is_selected = (item_current_idx == n);
-                if (ImGui::Selectable(items[n], is_selected))
+                if (ImGui::Selectable(MaterialConst::names[n].c_str(), is_selected))
                 {
-                    item_current_idx = n;
-                    modalSound->SetMaterial(item_current_idx);
+                    if (item_current_idx != n)
+                    {
+                        item_current_idx = n;
+                        modalSound->init(modalSound->filename, item_current_idx);
+                        modalSound->SetMaterial(item_current_idx);
+                    }
+                    
                 }
                 // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                 if (is_selected)
@@ -96,11 +101,12 @@ namespace SoundRender
             ImGui::EndListBox();
         }
 
+
         int sample_num;
         if (last_phase == -1)
         {
             auto fps = ImGui::GetIO().Framerate;
-            data.update_phase = left_phase + DELTA_SAMPLE_NUM / 2;
+            data.update_phase = left_phase + DELTA_SAMPLE_NUM *1.5;
             sample_num = (int)(1 / fps * SAMPLE_RATE);
         }
         else
@@ -109,7 +115,9 @@ namespace SoundRender
         }
         last_phase = left_phase;
 
-        float scale_factor = Correction::soundScale;
+        TICK(signal)
+        LOG(sample_num)
+        float scale_factor = 10000000000;// Correction::soundScale;
         for (auto &modalInfo : modalSound->modalInfos)
         {
             float ffat_factor = modalSound->GetFFATFactor(modalInfo) * 10000;
@@ -119,18 +127,26 @@ namespace SoundRender
             float c1 = modalInfo.coeff1;
             float c2 = modalInfo.coeff2;
             float c3 = modalInfo.coeff3;
+            LOG(q1 <<" "<< q2)
+            if (abs(q1* ffat_factor * scale_factor) < 1e-3 && abs(q2* ffat_factor * scale_factor) < 1e-3 && f < 1e-3)
+            {
+                continue;
+            }
+
             for (int i = 0; i < sample_num; i++)
             {
                 float q = c1 * q1 + c2 * q2 + c3 * f;
                 q2 = q1;
                 q1 = q;
-                f = f * 0.2;
+                f = f * 0.1;
                 data.signal[(data.update_phase + i) % TABLE_SIZE] += q * ffat_factor * scale_factor;
             }
             modalInfo.q1 = q1;
             modalInfo.q2 = q2;
             modalInfo.f = f;
         }
+        TOCK(signal)
+
         if (modalSound->click_current_frame)
         {
             for (int i = 0; i < signalPlotData.size; i++)
@@ -140,6 +156,7 @@ namespace SoundRender
             modalSound->click_current_frame = false;
         }
         data.update_phase = data.update_phase + sample_num;
+        
 
         // plot the sound wave
         if (ImPlot::BeginPlot("Audio Click Signal"))
@@ -205,7 +222,7 @@ namespace SoundRender
         ImGui::SameLine();
         ImPlot::ColormapScale("##HeatScale", scale_min, scale_max, ImVec2(60, 225));
         ImPlot::PopColormap();
-        //end of plotting FFAT map
+        // end of plotting FFAT map
 
 
     }

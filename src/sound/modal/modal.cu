@@ -68,10 +68,13 @@ namespace SoundRender
         return;
     };
 
-    void ModalSound::init(const std::string& modelName)
+    void ModalSound::init(const std::string &filename, int materialID)
     {
-        auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modelName + std::string(".npz");
-        auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modelName + std::string(".npz");
+        this->filename = filename;
+        auto pos1 = filename.rfind('/') + 1, pos2 = filename.rfind('.');
+        auto modelName = filename.substr(pos1, pos2 - pos1);
+        auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modelName + std::string("_") + MaterialConst::names[materialID] + std::string(".npz");
+        auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modelName + std::string("_") + MaterialConst::names[materialID] + std::string(".npz");
         auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/") + modelName + std::string(".npy");
         SetModal(eigenPath.c_str(), ffatPath.c_str(), voxelPath.c_str());
         Correction::soundScale = Correction::allSoundScales[modelName];
@@ -82,7 +85,7 @@ namespace SoundRender
     {
         ImGui::Text("Here is ModalSound Module");
         ImGui::Text("Mesh has %d vertices and %d triangles", mesh_render->vertices.size(), mesh_render->triangles.size());
-        ImGui::Text("Camera position:  (%f, %f, %f)", mesh_render->camera.Position.x * Correction::camScale, 
+        ImGui::Text("Camera position:  (%f, %f, %f)", mesh_render->camera.Position.x * Correction::camScale,
                     mesh_render->camera.Position.y * Correction::camScale, mesh_render->camera.Position.z * Correction::camScale);
         ImGui::SliderFloat("Click Force", &force, 0.0f, 1.0f);
         ImGui::Text("Force: %f", force);
@@ -97,6 +100,10 @@ namespace SoundRender
             int3 tri = mesh_render->triangles[mesh_render->selectedTriangle];
             select_point = GetTriangleCenter(tri, mesh_render->vertices);
             auto norm = GetTriangleNormal(tri, mesh_render->vertices);
+            auto y = norm.x;
+            auto x = -norm.y;
+            norm.x = x;
+            norm.y = y;
             select_voxel_idx = GetNormalizedID(select_point);
 
             for (int i = 0; i < 8; i++)
@@ -130,21 +137,21 @@ namespace SoundRender
         float scale_factor = (2 * M_PI * 3000) * (2 * M_PI * 3000);
         float tanHalfFov = std::tan(glm::radians(15.0f) / 2);
         float tempScale = tanHalfFov / std::tan(glm::radians(45.0f) / 2);
-        std::vector<double> ffatFactors(modalInfos.size());       
-        for(int i = 0; i < ffatFactors.size(); i++)
+        std::vector<double> ffatFactors(modalInfos.size());
+        for (int i = 0; i < ffatFactors.size(); i++)
         {
             double tempMax = 0.0f;
-            for(auto& row:modalInfos[i].ffat)
+            for (auto &row : modalInfos[i].ffat)
             {
                 auto temp = std::max_element(row.begin(), row.end());
                 tempMax = std::max(*temp, tempMax);
             }
             ffatFactors[i] = tempMax / (4 * tempScale);
         }
-        for(int materialID = 0; materialID < 8; materialID++)
+        for (int materialID = 0; materialID < 8; materialID++)
         {
             SetMaterial(materialID);
-            for(int i = 0; i < mesh_render->triangles.size(); i++)
+            for (int i = 0; i < mesh_render->triangles.size(); i++)
             {
                 int3 tri = mesh_render->triangles[i];
                 select_point = GetTriangleCenter(tri, mesh_render->vertices);
@@ -166,7 +173,7 @@ namespace SoundRender
                 float result = 0.0f;
                 for (int i = 0; i < modalInfos.size(); i++)
                 {
-                    auto& modalInfo = modalInfos[i];
+                    auto &modalInfo = modalInfos[i];
                     float ffat_factor = ffatFactors[i] * 10000;
                     float q1 = modalInfo.q1;
                     float q2 = modalInfo.q2;
@@ -178,16 +185,20 @@ namespace SoundRender
                     modalInfo.f = 0;
                     result += q * ffat_factor * scale_factor;
                 }
-                
-                if(result > currMax)
+
+                if (result > currMax)
                     currMax = result;
             }
         }
         Correction::soundScale = scale_factor / (currMax + 0.1f);
     }
-    
+
     int3 ModalSound::GetNormalizedID(float3 center)
     {
+        auto y = center.x;
+        auto x = -center.y;
+        center.x = x;
+        center.y = y;
         size_t voxelNum = voxelData.batchs - 1;
         float3 bbMin = mesh_render->bbox_min, bbMax = mesh_render->bbox_max;
         float3 relative_coord = (center - bbMin) / (bbMax - bbMin);
@@ -256,7 +267,8 @@ namespace SoundRender
 
     void ModalSound::SetMaterial(int chosenID)
     {
-        for(auto& modalInfo : modalInfos)
+        LOG("SetMaterial: " << chosenID);
+        for (auto &modalInfo : modalInfos)
             modalInfo.SetMaterial(chosenID);
         mesh_render->changeMaterial(chosenID);
         return;
@@ -266,9 +278,9 @@ namespace SoundRender
     {
         click_current_frame = false;
         cnpy::npz_t eigenData = cnpy::npz_load(eigenPath);
-        cnpy::NpyArray &rawEigenValues = eigenData["vals"];                 // get S
-        cnpy::NpyArray &rawEigenVecs = eigenData["vecs"];                   // get U
-        cnpy::NpyArray rawFFAT = cnpy::npz_load(ffatPath, "feats_out_far"); // get FFAT.
+        cnpy::NpyArray &rawEigenValues = eigenData["vals"];             // get S
+        cnpy::NpyArray &rawEigenVecs = eigenData["vecs"];               // get U
+        cnpy::NpyArray rawFFAT = cnpy::npz_load(ffatPath, "feats_out"); // get FFAT.
         assert(rawFFAT.word_size == sizeof(double));
         assert(rawEigenValues.word_size == sizeof(float));
         assert(rawEigenVecs.word_size == sizeof(float));
@@ -309,14 +321,14 @@ namespace SoundRender
         float colInter = theta * colSampleIntervalRep, rowInter = phi * rowSampleIntervalRep;
         int col = static_cast<int>(colInter);
         float colFrac = colInter - static_cast<float>(col);
-        if(col < 0 || col > ffatColNum)
+        if (col < 0 || col > ffatColNum)
         {
             col = 0;
             colFrac = 0;
         }
         int row = static_cast<int>(rowInter);
         float rowFrac = rowInter - static_cast<float>(row);
-        if(row < 0 || row > ffatRowNum)
+        if (row < 0 || row > ffatRowNum)
         {
             row = 0;
             rowFrac = 0;
@@ -339,30 +351,31 @@ namespace SoundRender
         std::fstream correctionFile(scaleFilePath, std::ios::in | std::ios::out | std::ios::app);
         std::string modelName;
         float modalScale;
-        while(correctionFile >> modelName >> modalScale)
+        while (correctionFile >> modelName >> modalScale)
         {
             Correction::allSoundScales.emplace(modelName, modalScale);
         };
         correctionFile.clear();
 
-        [[maybe_unused]] const auto AsciiWStrToStr = [](const std::wstring& wstr){ return std::string(wstr.begin(), wstr.end()); };
-        for(const auto & entry : std::filesystem::directory_iterator(meshRootPath))
+        [[maybe_unused]] const auto AsciiWStrToStr = [](const std::wstring &wstr)
+        { return std::string(wstr.begin(), wstr.end()); };
+        for (const auto &entry : std::filesystem::directory_iterator(meshRootPath))
         {
-        #ifdef _WIN32
+#ifdef _WIN32
             auto tempName = entry.path().filename().replace_extension(L"");
             modelName = AsciiWStrToStr(tempName.c_str());
-        #else
+#else
             modelName = entry.path().filename().replace_extension("");
-        #endif
-            if(Correction::allSoundScales.find(modelName) == Correction::allSoundScales.end())
+#endif
+            if (Correction::allSoundScales.find(modelName) == Correction::allSoundScales.end())
             {
-                #ifdef _WIN32
-                    auto tempPath = entry.path().wstring();
-                    auto meshPath = AsciiWStrToStr(tempPath);
-                #else
-                    auto tempPath = entry.path();
-                    auto meshPath = tempPath.string();
-                #endif
+#ifdef _WIN32
+                auto tempPath = entry.path().wstring();
+                auto meshPath = AsciiWStrToStr(tempPath);
+#else
+                auto tempPath = entry.path();
+                auto meshPath = tempPath.string();
+#endif
                 auto mesh = loadOBJ(meshPath);
                 MeshRender render;
                 render.load_mesh(mesh.vertices, mesh.triangles, mesh.vertex_texcoords, mesh.tex_triangles);

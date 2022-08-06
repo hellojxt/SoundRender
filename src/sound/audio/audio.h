@@ -47,6 +47,7 @@ namespace SoundRender
         paSoundData data;
         long int last_phase;
         SignalPlotData signalPlotData;
+        glm::vec3 camera_pos;
         AudioWapper();
         void init()
         {

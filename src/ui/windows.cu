@@ -262,27 +262,27 @@ namespace SoundRender
         float tx = wsize.x * OVERSAMPLE, ty = wsize.y * OVERSAMPLE;
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glViewport(0, 0, tx, ty);
-        struct AlphaTest
-        {
-            int id;
-            float dis;
-            bool operator<(const AlphaTest& t2)const {return dis < t2.dis;}
-        };
-        std::vector<AlphaTest> v(triangles.size());
-        for(int i = 0; i < v.size(); i++)
-        {
-            v[i].id = i;
-            auto temp = (vertices[triangles[i].x] + vertices[triangles[i].y] + vertices[triangles[i].z]) / 3;
-            v[i].dis = glm::length(camera.Position - glm::vec3{temp.x, temp.y, temp.z});
-        }
-        std::set<AlphaTest> sortedArray(v.begin(), v.end());
-        if(material.alpha < 0.99)
-        {
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glDisable(GL_DEPTH_TEST);
-        }
-        else
+        // struct AlphaTest
+        // {
+        //     int id;
+        //     float dis;
+        //     bool operator<(const AlphaTest& t2)const {return dis < t2.dis;}
+        // };
+        // std::vector<AlphaTest> v(triangles.size());
+        // for(int i = 0; i < v.size(); i++)
+        // {
+        //     v[i].id = i;
+        //     auto temp = (vertices[triangles[i].x] + vertices[triangles[i].y] + vertices[triangles[i].z]) / 3;
+        //     v[i].dis = glm::length(camera.Position - glm::vec3{temp.x, temp.y, temp.z});
+        // }
+        // std::set<AlphaTest> sortedArray(v.begin(), v.end());
+        // if(material.alpha < 0.99)
+        // {
+        //     glEnable(GL_BLEND);
+        //     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //     glDisable(GL_DEPTH_TEST);
+        // }
+        // else
             glEnable(GL_DEPTH_TEST);
         glClearColor(0.3f, 0.3f, 0.3f, 0.3f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -316,14 +316,14 @@ namespace SoundRender
         glBindVertexArray(meshVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
-        if(material.alpha < 0.99)
-        {
-            for(auto& it: sortedArray)
-            {
-                glDrawArrays(GL_TRIANGLES, it.id * 3, 3);
-            }
-        }
-        else
+        // if(material.alpha < 0.99)
+        // {
+        //     for(auto& it: sortedArray)
+        //     {
+        //         glDrawArrays(GL_TRIANGLES, it.id * 3, 3);
+        //     }
+        // }
+        // else
             glDrawArrays(GL_TRIANGLES, 0, 3 * meshData.size());
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST);

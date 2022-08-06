@@ -8,6 +8,7 @@
 #define M_PI (3.1415926)
 #include <filesystem>
 #include <unordered_map>
+#include <string>
 
 namespace SoundRender
 {
@@ -20,11 +21,11 @@ namespace SoundRender
 
     namespace MaterialConst
     {
-        // Caramic, Glass, Wood, Plastic, Iron, Polycarbonate, Steel, Tin.
-        constexpr float alpha[] = {6.0f, 1.0f, 60.0f, 30.0f, 5.0f, 0.5f, 5.0f, 2.0f};
-        constexpr float beta[] = {1e-7f, 1e-7f, 2e-6f, 1e-6f, 1e-7f, 4e-7f, 3e-8f, 3e-8f};
+        // Ceramic, Glass, Wood, Plastic, Iron, Steel, Tin.
+        static std::string names[] = {"Ceramic", "Glass", "Wood", "Plastic", "Iron", "Steel", "Tin" };
+        constexpr float alpha[] = {6.0f, 1.0f, 60.0f, 30.0f, 5.0f, 5.0f, 2.0f};
+        constexpr float beta[] = {1e-7f, 1e-7f, 2e-6f, 1e-6f, 1e-7f, 3e-8f, 3e-8f};
         constexpr float timestep = 1.0f / 44100;
-
         constexpr int offsets[][3] = {
             {0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}};
     };
@@ -55,7 +56,8 @@ namespace SoundRender
         int3 select_voxel_idx;
         int select_voxel_vertex_idx[8];
         bool click_current_frame;
-        void init(const std::string& modalName);
+        std::string filename;
+        void init(const std::string& modalName, int materialID);
 
         void link_mesh_render(MeshRender *mesh_render)
         {

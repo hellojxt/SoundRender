@@ -55,7 +55,6 @@ namespace SoundRender
             sub_windows[i]->init();
         }
 
-
         while (!glfwWindowShouldClose(window))
         {
             glfwPollEvents();
@@ -66,7 +65,6 @@ namespace SoundRender
             ImGui::NewFrame();
             ImGui::Text("FPS: %.4f", ImGui::GetIO().Framerate);
             update();
-
             // Rendering
             ImGui::Render();
             int display_w, display_h;
@@ -77,6 +75,7 @@ namespace SoundRender
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             glfwSwapBuffers(window);
+            
         }
 
         // Cleanup

@@ -4,6 +4,7 @@
 #include "modal.h"
 #include <filesystem>
 #include "string.h"
+#include <vector>
 
 namespace SoundRender
 {
@@ -12,31 +13,67 @@ namespace SoundRender
     public:
         AudioWapper audio;
         ModalSound modal;
-        std::string filename;
-        AudioWindow(std::string filename_){
-            filename = filename_;            
+        int select_object_idx = 0;
+        std::vector<std::string> filename_lst;
+        std::vector<std::string> basename_lst;
+
+        AudioWindow()
+        {
+            std::string meshPath = std::string(ASSET_DIR) + "/meshes/";
+            for (const auto &meshfile : std::filesystem::directory_iterator(meshPath))
+            {
+                auto mesh = meshfile.path().filename().string();
+                filename_lst.push_back(meshPath + mesh);
+                // "/home/jxt/SoundRender/asset/meshes/plate.obj" to "plate"
+                auto basename = mesh.substr(mesh.find_last_of("/") + 1);
+                basename = basename.substr(0, basename.find_last_of("."));
+                basename_lst.push_back(basename);
+            }
+            title = "audio window";
         }
         void init()
         {
-            title = "audio window";
+            auto filename = filename_lst[select_object_idx];
+            LOG("filename: " << filename);
+            modal.init(filename, 0);
             audio.init();
-            auto pos1 = filename.rfind('/') + 1, pos2 = filename.rfind('.');
-            auto modalName = filename.substr(pos1, pos2 - pos1);
-            modal.init(modalName);
+            auto mesh = loadOBJ(filename, true);
+            modal.mesh_render->load_mesh(mesh.vertices, mesh.triangles, mesh.vertex_texcoords, mesh.tex_triangles);
+            modal.mesh_render->Prepare(mesh.mtlLibName);
         }
-        
-        void link_mesh_render(MeshRender* mesh)
+
+        void link_mesh_render(MeshRender *mesh)
         {
             modal.link_mesh_render(mesh);
             audio.link_modal(&modal);
         }
-        
+
         void update()
         {
+            
+            if (ImGui::TreeNode("Object Model"))
+            {
+                for (int n = 0; n < basename_lst.size(); n++)
+                {
+                    if (ImGui::Selectable(basename_lst[select_object_idx].c_str(), select_object_idx == n))
+                    {
+                        if (select_object_idx != n)
+                        {
+                            select_object_idx = n;
+                            init();
+                        }
+                    }
+                }
+                ImGui::TreePop();
+            }
+
             modal.update();
+
             ImGui::Text("\n");
+
             audio.update();
+
         }
-        ~AudioWindow() { audio.close();}
+        ~AudioWindow() { audio.close(); }
     };
 }
