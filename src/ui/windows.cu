@@ -334,7 +334,7 @@ namespace SoundRender
 
     void MeshRender::changeMaterial(int chosenID)
     {
-        const char* materialNames[] = { "Ceramic_Glazed", "Glass_Simple", "Bright_tiles_square", "Plastic_Shader", "Rough_Iron_Steel", "Polycarbonate", "Stainless_Steel", "wet_aluminium"};
+        const char* materialNames[] = { "Ceramic_Glazed", "Glass_Simple", "Bright_tiles_square", "Plastic_Shader", "Rough_Iron_Steel", "Stainless_Steel", "wet_aluminium"};
         material = loadMaterial(std::string(ASSET_DIR) + std::string("/materials/") + mtlLib, materialNames[chosenID]);
         bool useTexture = material.texturePicName.length() != 0;
         if(useTexture)

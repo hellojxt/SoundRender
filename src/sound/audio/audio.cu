@@ -127,7 +127,7 @@ namespace SoundRender
                 float c1 = modalInfo.coeff1;
                 float c2 = modalInfo.coeff2;
                 float c3 = modalInfo.coeff3;
-                // LOG(q1 <<" "<< q2)
+
                 if (abs(q1 * ffat_factor * scale_factor) < 1e-3 && abs(q2 * ffat_factor * scale_factor) < 1e-3 && f < 1e-3)
                 {
                     continue;
@@ -145,7 +145,7 @@ namespace SoundRender
                 modalInfo.q2 = q2;
                 modalInfo.f = f;
             }
-
+        
             for (int i = 0; i < signalPlotData.size; i++)
             {
                 signalPlotData.y[i] = data.signal[(data.update_phase + i - 100) % TABLE_SIZE];

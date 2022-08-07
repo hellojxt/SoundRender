@@ -65,6 +65,7 @@ namespace SoundRender
         float coeff3_item1 = epsilon * std::cos(theta + gamma);
         float coeff3_item2 = sqrEpsilon * std::cos(2 * theta + gamma);
         coeff3 = 2 * (coeff3_item1 - coeff3_item2) / (3 * omega * omega_prime);
+        f = 0;
         return;
     };
 
@@ -73,11 +74,12 @@ namespace SoundRender
         this->filename = filename;
         auto pos1 = filename.rfind('/') + 1, pos2 = filename.rfind('.');
         auto modelName = filename.substr(pos1, pos2 - pos1);
-        auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modelName + std::string("_") + MaterialConst::names[materialID] + std::string(".npz");
-        auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modelName + std::string("_") + MaterialConst::names[materialID] + std::string(".npz");
+        auto modelMtlName = modelName + std::string("_") + MaterialConst::names[materialID];
+        auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modelMtlName + std::string(".npz");
+        auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modelMtlName + std::string(".npz");
         auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/") + modelName + std::string(".npy");
         SetModal(eigenPath.c_str(), ffatPath.c_str(), voxelPath.c_str());
-        Correction::soundScale = Correction::allSoundScales[modelName];
+        Correction::soundScale = Correction::allSoundScales[modelMtlName];
         return;
     }
 
@@ -98,7 +100,6 @@ namespace SoundRender
         // if click or space key is pressed
         if ((mesh_render->soundNeedsUpdate || ImGui::IsKeyPressed(GLFW_KEY_SPACE)) && mesh_render->selectedTriangle != -1)
         {
-            std::cout << "True2.\n";
             int3 tri = mesh_render->triangles[mesh_render->selectedTriangle];
             select_point = GetTriangleCenter(tri, mesh_render->vertices);
             auto norm = GetTriangleNormal(tri, mesh_render->vertices);
@@ -206,6 +207,7 @@ namespace SoundRender
     void ModalSound::FillModalInfos(cnpy::NpyArray &rawEigenValues, cnpy::NpyArray &rawEigenVecs, cnpy::NpyArray &rawFFAT)
     {
         size_t selectNum = rawFFAT.shape[0];
+        modalInfos.clear();
         modalInfos.reserve(selectNum);
         float *valueData = rawEigenValues.data<float>();
         for (int i = 0; i < selectNum; i++)
@@ -269,7 +271,9 @@ namespace SoundRender
         for (auto &modalInfo : modalInfos)
             modalInfo.SetMaterial(chosenID);
         if(needShade)
+        {
             mesh_render->changeMaterial(chosenID);
+        }
         return;
     }
 
@@ -369,33 +373,38 @@ namespace SoundRender
 #else
             modelName = entry.path().filename().replace_extension("");
 #endif
-            if (Correction::allSoundScales.find(modelName) == Correction::allSoundScales.end())
+            bool needLoad = true;
+            MeshRender render;
+            ModalSound modal;
+            std::string meshPath;
+            Mesh mesh;
+            for (int i = 0; i < 7; i++)
             {
-#ifdef _WIN32
-                auto meshPath = AsciiWStrToStr(entry.path().c_str());
-#else
-                auto meshPath = entry.path().c_str();
-#endif
-                auto mesh = loadOBJ(meshPath);
-                MeshRender render;
-                render.load_mesh(mesh.vertices, mesh.triangles, mesh.vertex_texcoords, mesh.tex_triangles);
-                ModalSound modal;
-                modal.link_mesh_render(&render);
-
-                float currMinScale = 1e20;
-                for(int i = 0; i < 7; i++)
+                std::string modelMtlName = modelName + "_" + MaterialConst::names[i];
+                if (Correction::allSoundScales.find(modelMtlName) == Correction::allSoundScales.end())
                 {
-                    auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modelName + "_" + MaterialConst::names[i] + std::string(".npz");
-                    auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modelName + "_" + MaterialConst::names[i] + std::string(".npz");
+                    if (needLoad)
+                    {
+#ifdef _WIN32
+                        meshPath = AsciiWStrToStr(entry.path().c_str());
+#else
+                        meshPath = entry.path().c_str();
+#endif
+                        mesh = loadOBJ(meshPath);
+                        render.load_mesh(mesh.vertices, mesh.triangles, mesh.vertex_texcoords, mesh.tex_triangles);
+                        modal.link_mesh_render(&render);
+                        needLoad = false;
+                    }
+
+                    auto eigenPath = std::string(ASSET_DIR) + std::string("/eigen/") + modelMtlName + std::string(".npz");
+                    auto ffatPath = std::string(ASSET_DIR) + std::string("/acousticMap/") + modelMtlName + std::string(".npz");
                     auto voxelPath = std::string(ASSET_DIR) + std::string("/voxel/") + modelName + std::string(".npy");
                     modal.SetModal(eigenPath.c_str(), ffatPath.c_str(), voxelPath.c_str());
                     modal.SetMaterial(i, false);
                     modal.AdjustSoundScale();
-                    if(Correction::soundScale < currMinScale)
-                        currMinScale = Correction::soundScale;
-                } 
-                Correction::allSoundScales.emplace(modelName, currMinScale);
-                correctionFile << modelName << " " << currMinScale << "\n";
+                    Correction::allSoundScales.emplace(modelMtlName, Correction::soundScale);
+                    correctionFile << modelMtlName << " " << Correction::soundScale << "\n";
+                }
             }
             ++preprocessedCnt;
             std::cerr << preprocessedCnt << " files have finished preproecessing.\r";
