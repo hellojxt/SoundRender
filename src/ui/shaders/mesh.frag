@@ -5,11 +5,16 @@ in vec3 Normal;
 in vec3 FragPos;  
 in vec3 TexCoord;
 flat in int Flag;
+in vec3 reflection;
+in vec3 refraction;
+in float fresnel;
 
 uniform vec3 lightPos[NR_POINT_LIGHTS];
 uniform vec3 viewPos; 
 uniform vec3 lightColor;
 uniform sampler2D Texture;
+uniform int useTexture;
+
 uniform vec3 selectedColor;
 
 uniform vec3 ambientCoeff;
@@ -17,10 +22,19 @@ uniform vec3 diffuseCoeff;
 uniform vec3 specularCoeff;
 uniform float specularExp;
 uniform float alpha;
-uniform int useTexture;
 
+uniform samplerCube skyCube;
+uniform int useSkyCube;
 void main()
 {
+    if(useSkyCube == 1)
+    {
+      vec4 refractionColor = texture(skyCube, normalize(refraction));
+      vec4 reflectionColor = texture(skyCube, normalize(reflection));
+      FragColor = mix(refractionColor, reflectionColor, fresnel);
+      return;
+    }
+
     vec3 objColor;
     if(Flag == 1)
       objColor = selectedColor;

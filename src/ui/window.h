@@ -57,7 +57,7 @@ namespace SoundRender
         unsigned int textureColorbuffer;
         unsigned int rbo;
         unsigned int meshVAO, meshVBO;
-        unsigned int textureID;
+        unsigned int textureID, skycubeID;
         CArr<float3> vertices; 
         CArr<int3> triangles;
         GArr<float3> vertices_g;
@@ -103,6 +103,7 @@ namespace SoundRender
 
         void load_mesh(CArr<float3> vertices_, CArr<int3> triangles_, CArr<float3> texverts_, CArr<int3> textris_);
         void loadTexture(const char* path);
+        void loadSkycube(const std::string& path);
         void Prepare(std::string mtlLibName);
 
         void updateMesh();

@@ -151,44 +151,44 @@ namespace SoundRender
             }
             ffatFactors[i] = tempMax / (4 * tempScale);
         }
-            for (int i = 0; i < mesh_render->triangles.size(); i++)
+        for (int i = 0; i < mesh_render->triangles.size(); i++)
+        {
+            int3 tri = mesh_render->triangles[i];
+            select_point = GetTriangleCenter(tri, mesh_render->vertices);
+            auto norm = GetTriangleNormal(tri, mesh_render->vertices);
+            select_voxel_idx = GetNormalizedID(select_point);
+
+            for (int i = 0; i < 8; i++)
             {
-                int3 tri = mesh_render->triangles[i];
-                select_point = GetTriangleCenter(tri, mesh_render->vertices);
-                auto norm = GetTriangleNormal(tri, mesh_render->vertices);
-                select_voxel_idx = GetNormalizedID(select_point);
-
-                for (int i = 0; i < 8; i++)
+                auto offset = MaterialConst::offsets[i];
+                auto id = vertData[select_voxel_idx.x + offset[0]][select_voxel_idx.y + offset[1]][select_voxel_idx.z + offset[2]] * 3;
+                select_voxel_vertex_idx[i] = id;
+                for (auto &modalInfo : modalInfos)
                 {
-                    auto offset = MaterialConst::offsets[i];
-                    auto id = vertData[select_voxel_idx.x + offset[0]][select_voxel_idx.y + offset[1]][select_voxel_idx.z + offset[2]] * 3;
-                    select_voxel_vertex_idx[i] = id;
-                    for (auto &modalInfo : modalInfos)
-                    {
-                        auto mode_f = modalInfo.eigenVec[id] * norm.x + modalInfo.eigenVec[id + 1] * norm.y + modalInfo.eigenVec[id + 2] * norm.z;
-                        modalInfo.f += mode_f * 1.0f / 8; // force_max = 1.0f;
-                    }
+                    auto mode_f = modalInfo.eigenVec[id] * norm.x + modalInfo.eigenVec[id + 1] * norm.y + modalInfo.eigenVec[id + 2] * norm.z;
+                    modalInfo.f += mode_f * 1.0f / 8; // force_max = 1.0f;
                 }
-
-                float result = 0.0f;
-                for (int i = 0; i < modalInfos.size(); i++)
-                {
-                    auto &modalInfo = modalInfos[i];
-                    float ffat_factor = ffatFactors[i] * 10000;
-                    float q1 = modalInfo.q1;
-                    float q2 = modalInfo.q2;
-                    float f = modalInfo.f;
-                    float c1 = modalInfo.coeff1;
-                    float c2 = modalInfo.coeff2;
-                    float c3 = modalInfo.coeff3;
-                    float q = c1 * q1 + c2 * q2 + c3 * f;
-                    modalInfo.f = 0;
-                    result += q * ffat_factor * scale_factor;
-                }
-
-                if (result > currMax)
-                    currMax = result;
             }
+
+            float result = 0.0f;
+            for (int i = 0; i < modalInfos.size(); i++)
+            {
+                auto &modalInfo = modalInfos[i];
+                float ffat_factor = ffatFactors[i] * 10000;
+                float q1 = modalInfo.q1;
+                float q2 = modalInfo.q2;
+                float f = modalInfo.f;
+                float c1 = modalInfo.coeff1;
+                float c2 = modalInfo.coeff2;
+                float c3 = modalInfo.coeff3;
+                float q = c1 * q1 + c2 * q2 + c3 * f;
+                modalInfo.f = 0;
+                result += q * ffat_factor * scale_factor;
+            }
+
+            if (result > currMax)
+                currMax = result;
+        }
         Correction::soundScale = scale_factor / (currMax + 0.1f);
     }
 
