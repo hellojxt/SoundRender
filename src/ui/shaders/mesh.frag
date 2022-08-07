@@ -27,43 +27,44 @@ uniform samplerCube skyCube;
 uniform int useSkyCube;
 void main()
 {
-    if(useSkyCube == 1)
+    if(Flag == 1){
+      FragColor = vec4(selectedColor, 1.0);
+    }
+    else if(useSkyCube == 1)
     {
-      float k = 1;
+      float k = 0.2;
       vec4 refractionColor = texture(skyCube, normalize(refraction)) * k + vec4(0.3, 0.3, 0.3, 1.0)*(1.0-k);
       vec4 reflectionColor = texture(skyCube, normalize(reflection)) * k + vec4(0.3, 0.3, 0.3, 1.0)*(1.0-k);
       // refractionColor = vec4(0,3, 0.3, 0.3, 1);
       // reflectionColor = vec4(0,3, 0.3, 0.3, 1);
-      FragColor = mix(refractionColor, reflectionColor, 0.5);
-      return;
+      FragColor = mix(refractionColor, reflectionColor, fresnel);
     }
+    else {
+      vec3 objColor;
+        if(useTexture == 1)
+          objColor = texture2D(Texture, vec2(TexCoord.s, 1.0 - TexCoord.t)).rgb;
+        else
+          objColor = vec3(1.0, 1.0, 1.0);
+        // ambient
+        // float ambientStrength = 0.2;
+        vec3 ambient = ambientCoeff * lightColor;
+        vec3 result = ambient;
+        for (int i = 0; i < NR_POINT_LIGHTS; i++)
+        {
+            // diffuse 
+            vec3 norm = normalize(Normal);
+            vec3 lightDir = normalize(lightPos[i] - FragPos);
+            float diff = max(dot(norm, lightDir), 0.0);
+            vec3 diffuse = diffuseCoeff * diff * lightColor;
 
-    vec3 objColor;
-    if(Flag == 1)
-      objColor = selectedColor;
-    else if(useTexture == 1)
-      objColor = texture2D(Texture, vec2(TexCoord.s, 1.0 - TexCoord.t)).rgb;
-    else
-      objColor = vec3(1.0, 1.0, 1.0);
-    // ambient
-    // float ambientStrength = 0.2;
-    vec3 ambient = ambientCoeff * lightColor;
-  	vec3 result = ambient;
-    for (int i = 0; i < NR_POINT_LIGHTS; i++)
-    {
-        // diffuse 
-        vec3 norm = normalize(Normal);
-        vec3 lightDir = normalize(lightPos[i] - FragPos);
-        float diff = max(dot(norm, lightDir), 0.0);
-        vec3 diffuse = diffuseCoeff * diff * lightColor;
-
-        // specular
-        // float specularStrength = 0.2;
-        vec3 viewDir = normalize(vec3(0,0,0) - FragPos);
-        vec3 reflectDir = reflect(-lightDir, norm);  
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularExp);
-        vec3 specular = specularCoeff * spec * lightColor;  
-        result += (diffuse + specular)*objColor / NR_POINT_LIGHTS;
+            // specular
+            // float specularStrength = 0.2;
+            vec3 viewDir = normalize(vec3(0,0,0) - FragPos);
+            vec3 reflectDir = reflect(-lightDir, norm);  
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularExp);
+            vec3 specular = specularCoeff * spec * lightColor;  
+            result += (diffuse + specular)*objColor / NR_POINT_LIGHTS;
+        }
+        FragColor = vec4(result, alpha);
     }
-    FragColor = vec4(result, alpha);
 } 

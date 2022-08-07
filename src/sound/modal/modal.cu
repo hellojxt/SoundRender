@@ -71,6 +71,15 @@ namespace SoundRender
 
     void ModalSound::init(const std::string &filename, int materialID)
     {
+        if (font == nullptr)
+        {
+            ImGuiIO &io = ImGui::GetIO();
+            ImFontConfig config;
+            config.SizePixels = 18;
+            config.OversampleH = config.OversampleV = 1;
+            config.PixelSnapH = true;
+            font = io.Fonts->AddFontDefault(&config);
+        }
         this->filename = filename;
         auto pos1 = filename.rfind('/') + 1, pos2 = filename.rfind('.');
         auto modelName = filename.substr(pos1, pos2 - pos1);
@@ -85,14 +94,24 @@ namespace SoundRender
 
     void ModalSound::update()
     {
-        ImGui::Text("Here is ModalSound Module");
-        ImGui::Text("Mesh has %d vertices and %d triangles", mesh_render->vertices.size(), mesh_render->triangles.size());
-        ImGui::Text("Camera position:  (%f, %f, %f)", mesh_render->camera.Position.x * Correction::camScale,
-                    mesh_render->camera.Position.y * Correction::camScale, mesh_render->camera.Position.z * Correction::camScale);
-        ImGui::SliderFloat("Click Force", &force, 0.0f, 1.0f);
-        ImGui::Text("Force: %f", force);
-        ImGui::Text("Selected Triangle Index: %d", mesh_render->selectedTriangle);
-        ImGui::Text("This material & model preprocessed for %lf seconds.", preprocessTime);
+        // ImGui::Text("Here is ModalSound Module");
+        // ImGui::Text("Mesh has %d vertices and %d triangles", mesh_render->vertices.size(), mesh_render->triangles.size());
+        // ImGui::Text("Camera position:  (%f, %f, %f)", mesh_render->camera.Position.x * Correction::camScale,
+        //             mesh_render->camera.Position.y * Correction::camScale, mesh_render->camera.Position.z * Correction::camScale);
+        // ImGui::Text("Force: %f", force);
+        // ImGui::Text("Selected Triangle Index: %d", mesh_render->selectedTriangle);
+
+        ImGui::Text("\nThe modal data and acoustic maps of");
+        ImGui::Text("this material & object is precomputed");
+        ImGui::Text("by NeuralSound in");
+        ImGui::SameLine();
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
+        ImGui::Text(" %lf ",preprocessTime);
+        ImGui::PopStyleColor();
+        ImGui::SameLine();
+        ImGui::Text("seconds");
+        ImGui::Text("\nClick Force");
+        ImGui::SliderFloat("##Click Force", &force, 0.0f, 1.0f);
         float tanHalfFov = std::tan(glm::radians(mesh_render->camera.Zoom) / 2);
         static float initTanHalfFov = tanHalfFov;
         Correction::camScale = tanHalfFov / initTanHalfFov;
@@ -119,15 +138,15 @@ namespace SoundRender
             click_current_frame = true;
             mesh_render->soundNeedsUpdate = false;
         }
-        ImGui::Text("Selected Triangle Center: (%f, %f, %f)", select_point.x, select_point.y, select_point.z);
-        ImGui::Text("Selected Voxel Index: (%d, %d, %d)", select_voxel_idx.x, select_voxel_idx.y, select_voxel_idx.z);
-        if (select_voxel_idx.x >= 0 && select_voxel_idx.y >= 0 && select_voxel_idx.z >= 0)
-            ImGui::Text("Selected Voxel value: %d", voxelData(select_voxel_idx.x, select_voxel_idx.y, select_voxel_idx.z));
-        ImGui::Text("Selected Voxel Vertex Index: ");
-        for (int i = 0; i < 8; i++)
-        {
-            ImGui::Text("%d", select_voxel_vertex_idx[i]);
-        }
+        // ImGui::Text("Selected Triangle Center: (%f, %f, %f)", select_point.x, select_point.y, select_point.z);
+        // ImGui::Text("Selected Voxel Index: (%d, %d, %d)", select_voxel_idx.x, select_voxel_idx.y, select_voxel_idx.z);
+        // if (select_voxel_idx.x >= 0 && select_voxel_idx.y >= 0 && select_voxel_idx.z >= 0)
+        //     ImGui::Text("Selected Voxel value: %d", voxelData(select_voxel_idx.x, select_voxel_idx.y, select_voxel_idx.z));
+        // ImGui::Text("Selected Voxel Vertex Index: ");
+        // for (int i = 0; i < 8; i++)
+        // {
+        //     ImGui::Text("%d", select_voxel_vertex_idx[i]);
+        // }
     }
 
     void ModalSound::AdjustSoundScale()
@@ -262,7 +281,7 @@ namespace SoundRender
         LOG("SetMaterial: " << chosenID);
         for (auto &modalInfo : modalInfos)
             modalInfo.SetMaterial(chosenID);
-        if(needShade)
+        if (needShade)
         {
             mesh_render->changeMaterial(chosenID);
         }

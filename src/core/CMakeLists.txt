@@ -1,1 +1,1 @@
-add_library(corelib objIO.cu)
+add_library(corelib STATIC objIO.cu)
