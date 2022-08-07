@@ -103,10 +103,6 @@ namespace SoundRender
             int3 tri = mesh_render->triangles[mesh_render->selectedTriangle];
             select_point = GetTriangleCenter(tri, mesh_render->vertices);
             auto norm = GetTriangleNormal(tri, mesh_render->vertices);
-            auto y = norm.x;
-            auto x = -norm.y;
-            norm.x = x;
-            norm.y = y;
             select_voxel_idx = GetNormalizedID(select_point);
 
             for (int i = 0; i < 8; i++)
@@ -194,10 +190,6 @@ namespace SoundRender
 
     int3 ModalSound::GetNormalizedID(float3 center)
     {
-        auto y = center.x;
-        auto x = -center.y;
-        center.x = x;
-        center.y = y;
         size_t voxelNum = voxelData.batchs - 1;
         float3 bbMin = mesh_render->bbox_min, bbMax = mesh_render->bbox_max;
         float3 relative_coord = (center - bbMin) / (bbMax - bbMin);
