@@ -29,9 +29,12 @@ void main()
 {
     if(useSkyCube == 1)
     {
-      vec4 refractionColor = texture(skyCube, normalize(refraction));
-      vec4 reflectionColor = texture(skyCube, normalize(reflection));
-      FragColor = mix(refractionColor, reflectionColor, fresnel);
+      float k = 1;
+      vec4 refractionColor = texture(skyCube, normalize(refraction)) * k + vec4(0.3, 0.3, 0.3, 1.0)*(1.0-k);
+      vec4 reflectionColor = texture(skyCube, normalize(reflection)) * k + vec4(0.3, 0.3, 0.3, 1.0)*(1.0-k);
+      // refractionColor = vec4(0,3, 0.3, 0.3, 1);
+      // reflectionColor = vec4(0,3, 0.3, 0.3, 1);
+      FragColor = mix(refractionColor, reflectionColor, 0.5);
       return;
     }
 

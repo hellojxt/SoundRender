@@ -69,12 +69,12 @@ namespace SoundRender
             return;
         };
 
-        loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_X, "cm_pos_x.tga");
-        loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, "cm_neg_x.tga");
-        loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, "cm_pos_y.tga");
-        loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, "cm_neg_y.tga");
-        loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, "cm_pos_z.tga");
-        loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, "cm_neg_z.tga");
+        loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_X, "cm_pos_x.png");
+        loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, "cm_neg_x.png");
+        loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, "cm_pos_y.png");
+        loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, "cm_neg_y.png");
+        loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, "cm_pos_z.png");
+        loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, "cm_neg_z.png");
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -278,24 +278,17 @@ namespace SoundRender
         texverts_g.assign(texverts_);
         textriangles_g.assign(textris_);
         meshData_g.resize(triangles_g.size());
-        cuExecuteBlock(triangles_g.size(), CUDA_BLOCK_SIZE, mesh_preprocess, vertices_g, triangles_g, texverts_g, textriangles_g, meshData_g);
+        GArr<float3> vert_norm;
+        vert_norm.resize(vertices_g.size());
+        cuExecute(triangles_g.size(), mesh_preprocess, vertices_g, triangles_g, texverts_g, textriangles_g, meshData_g, vert_norm);
+        cuExecute(triangles_g.size(), mesh_preprocess_normals, triangles_g, meshData_g, vert_norm);
         meshData.assign(meshData_g);
         meshNeedsUpdate = true;
     }
 
     void MeshRender::resetMesh()
     {
-        meshData_g.resize(triangles_g.size());
-        cuExecuteBlock(triangles_g.size(), CUDA_BLOCK_SIZE, mesh_preprocess, vertices_g, triangles_g, texverts_g, textriangles_g, meshData_g);
-        meshData.assign(meshData_g);
-        meshNeedsUpdate = true;
-        if (selectedTriangle >= 0)
-        {
-            meshData[selectedTriangle].flag1 = 0;
-            meshData[selectedTriangle].flag2 = 0;
-            meshData[selectedTriangle].flag3 = 0;
-            selectedTriangle = -1;
-        }
+
     }
 
     void MeshRender::update()

@@ -4,8 +4,18 @@
 #include "window.h"
 namespace SoundRender
 {
-
-    __global__ void mesh_preprocess(GArr<float3> vertices, GArr<int3> triangles, GArr<float3> texVerts, GArr<int3> texTris, GArr<Triangle> GLdata)
+    __global__ void mesh_preprocess_normals(GArr<int3> triangles, GArr<Triangle> GLdata, GArr<float3> vert_norm){
+        int tri_id = threadIdx.x + blockIdx.x * blockDim.x;
+        if (tri_id >= triangles.size())
+            return;
+        int3 tri = triangles[tri_id];
+        Triangle data = GLdata[tri_id];
+        data.n1 = normalize(vert_norm[tri.x]);
+        data.n2 = normalize(vert_norm[tri.y]);
+        data.n3 = normalize(vert_norm[tri.z]);
+        GLdata[tri_id] = data;
+    }
+    __global__ void mesh_preprocess(GArr<float3> vertices, GArr<int3> triangles, GArr<float3> texVerts, GArr<int3> texTris, GArr<Triangle> GLdata, GArr<float3> vert_norm)
     {
         int tri_id = threadIdx.x + blockIdx.x * blockDim.x;
         if (tri_id >= triangles.size())
@@ -20,6 +30,9 @@ namespace SoundRender
         data.n1 = normal;
         data.n2 = normal;
         data.n3 = normal;
+        atomicAddFloat3(&vert_norm[tri.x], normal);
+        atomicAddFloat3(&vert_norm[tri.y], normal);
+        atomicAddFloat3(&vert_norm[tri.z], normal);
         if(tri_id < texTris.size())
         {
             int3 texTri = texTris[tri_id];

@@ -77,7 +77,12 @@ namespace SoundRender
         atomicAdd_block((float *)(dst), (value).real());			\
         atomicAdd_block(((float *)(dst)) + 1, (value).imag());		\
     }
-
+#define atomicAddFloat3(dst, value)								\
+	{															\
+		atomicAdd((float *)(dst), (value).x);						\
+		atomicAdd(((float *)(dst)) + 1, (value).y);				\
+		atomicAdd(((float *)(dst)) + 2, (value).z);				\
+	}
 
 #ifdef NDEBUG
 #define cuSafeCall(X) X
