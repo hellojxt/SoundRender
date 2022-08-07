@@ -48,6 +48,7 @@ namespace SoundRender
         long int last_phase;
         SignalPlotData signalPlotData;
         glm::vec3 camera_pos;
+        int material_select_idx = 0;
         AudioWapper();
         void init()
         {

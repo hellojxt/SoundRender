@@ -56,11 +56,13 @@ namespace SoundRender
             {
                 for (int n = 0; n < basename_lst.size(); n++)
                 {
-                    if (ImGui::Selectable(basename_lst[select_object_idx].c_str(), select_object_idx == n))
+                    if (ImGui::Selectable(basename_lst[n].c_str(), select_object_idx == n))
                     {
                         if (select_object_idx != n)
                         {
                             select_object_idx = n;
+                            audio.material_select_idx = 0;
+                            modal.SetMaterial(0, true);
                             init();
                         }
                     }

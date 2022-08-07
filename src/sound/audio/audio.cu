@@ -77,20 +77,19 @@ namespace SoundRender
         ImGui::Text("delta_phase: %d", (int)(data.update_phase - left_phase));
         ImGui::Text("TABLE_SIZE: %d", TABLE_SIZE);
 
-
-        static int item_current_idx = 0; // Here we store our selection data as an index.
+         // Here we store our selection data as an index.
         if (ImGui::BeginListBox("Material List:\n"))
         {
             for (int n = 0; n < IM_ARRAYSIZE(MaterialConst::names); n++)
             {
-                const bool is_selected = (item_current_idx == n);
+                const bool is_selected = (material_select_idx == n);
                 if (ImGui::Selectable(MaterialConst::names[n].c_str(), is_selected))
                 {
-                    if (item_current_idx != n)
+                    if (material_select_idx != n)
                     {
-                        item_current_idx = n;
-                        modalSound->init(modalSound->filename, item_current_idx);
-                        modalSound->SetMaterial(item_current_idx, true);
+                        material_select_idx = n;
+                        modalSound->init(modalSound->filename, material_select_idx);
+                        modalSound->SetMaterial(material_select_idx, true);
                     }
                     
                 }
