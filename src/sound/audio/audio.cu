@@ -71,7 +71,7 @@ namespace SoundRender
     {
         float left_phase = data.left_phase;
         // ImGui::Text("Here is AudioWapper Module");
-        ImGui::Text("delta_phase: %d", (int)(data.update_phase - left_phase));
+        // ImGui::Text("delta_phase: %d", (int)(data.update_phase - left_phase));
         // ImGui::Text("TABLE_SIZE: %d", TABLE_SIZE);
 
         // Here we store our selection data as an index.
@@ -107,7 +107,7 @@ namespace SoundRender
                 modalInfo.f = 0;
                 continue;
             }
-            LOG(ffat_factor);
+
             for (int i = 0; i < sample_num; i++)
             {
                 float q = c1 * q1 + c2 * q2 + c3 * f;
@@ -130,11 +130,11 @@ namespace SoundRender
         data.update_phase = data.update_phase + sample_num;
 
         // plot the sound wave
-        if (ImPlot::BeginPlot("Audio Click Signal"))
-        {
-            ImPlot::PlotLine("signal", signalPlotData.x, signalPlotData.y, signalPlotData.size);
-            ImPlot::EndPlot();
-        }
+        // if (ImPlot::BeginPlot("Audio Click Signal"))
+        // {
+        //     ImPlot::PlotLine("signal", signalPlotData.x, signalPlotData.y, signalPlotData.size);
+        //     ImPlot::EndPlot();
+        // }
         // end of plotting sound wave
 
         // plot the FFAT map

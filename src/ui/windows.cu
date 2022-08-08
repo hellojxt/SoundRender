@@ -232,17 +232,11 @@ namespace SoundRender
             {
                 if (selectedTriangle >= 0)
                 {
-                    meshData[selectedTriangle].flag1 = 0;
-                    meshData[selectedTriangle].flag2 = 0;
-                    meshData[selectedTriangle].flag3 = 0;
                     selectedTriangle = -1;
                 }
                 selectedTriangle = min_idx;
-                meshData[selectedTriangle].flag1 = 1;
-                meshData[selectedTriangle].flag2 = 1;
-                meshData[selectedTriangle].flag3 = 1;
-                meshNeedsUpdate = true;
                 soundNeedsUpdate = true;
+                LOG("selected triangle: " << selectedTriangle << std::endl);
             }
         }
     }
@@ -311,6 +305,7 @@ namespace SoundRender
         // shader.setVec3("objectColor", 0.5f, 0.5f, 0.31f);
         shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
         shader.setVec3("selectedColor", 1.0f, 0.0f, 0.0f);
+        shader.setInt("selectedIdx", selectedTriangle);
 
         for (int light_idx = 0; light_idx < pointLightPositions.size(); light_idx++)
         {

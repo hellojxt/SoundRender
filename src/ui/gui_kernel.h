@@ -40,9 +40,9 @@ namespace SoundRender
             data.t2 = texVerts[texTri.y];
             data.t3 = texVerts[texTri.z];
         }
-        data.flag1 = 0;
-        data.flag2 = 0;
-        data.flag3 = 0;
+        data.flag1 = tri_id;
+        data.flag2 = tri_id;
+        data.flag3 = tri_id;
         GLdata[tri_id] = data;
     }
 

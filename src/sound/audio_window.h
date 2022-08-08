@@ -13,7 +13,7 @@ namespace SoundRender
     public:
         AudioWapper audio;
         ModalSound modal;
-        int select_object_idx = 0;
+        int select_object_idx = 2;
         int material_select_idx = 0;
         std::vector<std::string> filename_lst;
         std::vector<std::string> basename_lst;

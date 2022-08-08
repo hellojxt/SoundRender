@@ -16,6 +16,7 @@ uniform sampler2D Texture;
 uniform int useTexture;
 
 uniform vec3 selectedColor;
+uniform int selectedIdx;
 
 uniform vec3 ambientCoeff;
 uniform vec3 diffuseCoeff;
@@ -27,7 +28,7 @@ uniform samplerCube skyCube;
 uniform int useSkyCube;
 void main()
 {
-    if(Flag == 1){
+    if(Flag == selectedIdx){
       FragColor = vec4(selectedColor, 1.0);
     }
     else if(useSkyCube == 1)

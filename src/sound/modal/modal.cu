@@ -137,6 +137,7 @@ namespace SoundRender
             }
             click_current_frame = true;
             mesh_render->soundNeedsUpdate = false;
+
         }
         // ImGui::Text("Selected Triangle Center: (%f, %f, %f)", select_point.x, select_point.y, select_point.z);
         // ImGui::Text("Selected Voxel Index: (%d, %d, %d)", select_voxel_idx.x, select_voxel_idx.y, select_voxel_idx.z);

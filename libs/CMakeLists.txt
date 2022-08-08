@@ -8,12 +8,15 @@ if(WIN32)
 	include_directories(portaudio/include)
 else()
 	#on LINUX
-	find_package(GLEW REQUIRED)
 	find_package(glfw3 REQUIRED)
+	add_library(glewlib STATIC glew/src/glew.c glew/src/glewinfo.c glew/src/visualinfo.c)
+	target_link_libraries(glewlib PUBLIC ${OPENGL_LIBRARIES} glfw)
+	
 	find_package(ZLIB REQUIRED)
 	find_package(portaudio REQUIRED)
 	include_directories(${ZLIB_INCLUDE_DIRS})
-	include_directories(${GLEW_INCLUDE_DIRS})
+	include_directories(glew/include/GL)
+	include_directories(glew/include)
 endif()
 
 include_directories(${OPENGL_INCLUDE_DIRS})
@@ -92,12 +95,11 @@ if(WIN32)
 
 else()
 	#on LINUX
-	target_link_libraries(${NAME} PUBLIC ${OPENGL_LIBRARIES} glfw ${GLEW_LIBRARIES} ${ZLIB_LIBRARIES} portaudio)
+	target_link_libraries(${NAME} PUBLIC ${OPENGL_LIBRARIES} glfw glewlib ${ZLIB_LIBRARIES} portaudio_static)
 	target_include_directories(${NAME}
 			PUBLIC ${IMGUI_PUBLIC_INCLUDE_DIRS}
 					${GLFW_DIR}/include
-					${GLEW_INCLUDE_DIRS}
-					${CMAKE_CURRENT_SOURCE_DIR}
+					${CMAKE_CURRENT_SOURCE_DIR}/glew/include
 					${CMAKE_CURRENT_SOURCE_DIR}/glm
 			PRIVATE ${IMGUI_PRIVATE_INCLUDE_DIRS}
 			)
