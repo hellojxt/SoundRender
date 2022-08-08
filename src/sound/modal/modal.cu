@@ -111,7 +111,7 @@ namespace SoundRender
         ImGui::SameLine();
         ImGui::Text("seconds");
         ImGui::Text("\nClick Force");
-        ImGui::SliderFloat("##Click Force", &force, 0.0f, 1.0f);
+        ImGui::SliderFloat("##Click Force", &force, 0.0f, 5.0f);
         float tanHalfFov = std::tan(glm::radians(mesh_render->camera.Zoom) / 2);
         static float initTanHalfFov = tanHalfFov;
         Correction::camScale = tanHalfFov / initTanHalfFov;
@@ -339,14 +339,14 @@ namespace SoundRender
         float colInter = theta * colSampleIntervalRep, rowInter = phi * rowSampleIntervalRep;
         int col = static_cast<int>(colInter);
         float colFrac = colInter - static_cast<float>(col);
-        if (col < 0 || col > ffatColNum)
+        if (col < 0 || col >= ffatColNum)
         {
             col = 0;
             colFrac = 0;
         }
         int row = static_cast<int>(rowInter);
         float rowFrac = rowInter - static_cast<float>(row);
-        if (row < 0 || row > ffatRowNum)
+        if (row < 0 || row >= ffatRowNum)
         {
             row = 0;
             rowFrac = 0;

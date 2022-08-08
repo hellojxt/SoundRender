@@ -90,9 +90,16 @@ namespace SoundRender
         last_phase = left_phase;
 
         float scale_factor = Correction::soundScale;
+        int mode_idx = -1;
         for (auto &modalInfo : modalSound->modalInfos)
         {
+            mode_idx++;
             float ffat_factor = modalSound->GetFFATFactor(modalInfo) * 10000;
+            if (ffat_last_factor[mode_idx] < 0)
+            {
+                ffat_last_factor[mode_idx] = ffat_factor;
+            }
+            
             float q1 = modalInfo.q1;
             float q2 = modalInfo.q2;
             float f = modalInfo.f;
@@ -105,26 +112,32 @@ namespace SoundRender
                 modalInfo.q1 = 0;
                 modalInfo.q2 = 0;
                 modalInfo.f = 0;
+                ffat_last_factor[mode_idx] = ffat_factor;
                 continue;
             }
 
             for (int i = 0; i < sample_num; i++)
             {
+                float k = (float)i / (float)sample_num;
+                float ffat_factor_smooth = (1 - k) * ffat_last_factor[mode_idx] + k * ffat_factor;
                 float q = c1 * q1 + c2 * q2 + c3 * f;
                 q2 = q1;
                 q1 = q;
                 f = f * 0.1;
-                data.signal[(data.update_phase + i) % TABLE_SIZE] += q * ffat_factor * scale_factor;
+                data.signal[(data.update_phase + i) % TABLE_SIZE] += q * ffat_factor_smooth * scale_factor;
             }
             modalInfo.q1 = q1;
             modalInfo.q2 = q2;
             modalInfo.f = f;
+            ffat_last_factor[mode_idx] = ffat_factor;
         }
-        if (modalSound->click_current_frame)
-            for (int i = 0; i < signalPlotData.size; i++)
-            {
-                signalPlotData.y[i] = data.signal[(data.update_phase + i - 100) % TABLE_SIZE];
-            }
+        // if (modalSound->click_current_frame)
+        // for (int i = 0; i < signalPlotData.size; i++)
+        // {
+        //     signalPlotData.y[i] = data.signal[(data.update_phase + i) % TABLE_SIZE];
+        //     if (i > sample_num)
+        //         break;
+        // }
         modalSound->click_current_frame = false;
 
         data.update_phase = data.update_phase + sample_num;
@@ -132,9 +145,13 @@ namespace SoundRender
         // plot the sound wave
         // if (ImPlot::BeginPlot("Audio Click Signal"))
         // {
-        //     ImPlot::PlotLine("signal", signalPlotData.x, signalPlotData.y, signalPlotData.size);
+        //     ImPlot::SetupAxisLimits(ImAxis_X1, 0, 300);
+        //     ImPlot::SetupAxisLimits(ImAxis_Y1, -1, 1);
+        //     ImPlot::PlotLine("signal", signalPlotData.x, signalPlotData.y, sample_num);
         //     ImPlot::EndPlot();
         // }
+
+        // ImGui::Text("sample_num: %d", sample_num);
         // end of plotting sound wave
 
         // plot the FFAT map

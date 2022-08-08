@@ -4,9 +4,13 @@ Sound synthesis demo for SIGGRAPH 2022 Lab Session
 ## Running the precompiled binary
   
   ```bash
-  cd build
-  ./demo
+  # install some nessary dependencies
+  sudo apt install libglfw3-dev zlib1g-dev libasound-dev
+  # run the binary
+  cd SoundRender/build
+  export MESA_GL_VERSION_OVERRIDE=3.3 ./demo
   ```
+  
   Use middle mouse button to rotate the camera.
   Use right mouse button to click the object to generate sound.
   Use the scroll wheel to zoom in and out.

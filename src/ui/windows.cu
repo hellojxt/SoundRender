@@ -228,7 +228,7 @@ namespace SoundRender
             auto result_ptr = thrust::min_element(thrust::device, distance.begin(), distance.end());
             GArr<float> result(result_ptr, 1);
             int min_idx = result_ptr - distance.begin();
-            if (result.last_item() < FLT_MAX)
+            if (result.last_item() < FLT_MAX && min_idx < meshData.size())
             {
                 if (selectedTriangle >= 0)
                 {

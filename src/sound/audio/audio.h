@@ -48,11 +48,16 @@ namespace SoundRender
         long int last_phase;
         SignalPlotData signalPlotData;
         glm::vec3 camera_pos;
+        float ffat_last_factor[80];
         AudioWapper();
         void init()
         {
             LOG("Write AudioWapper init here");
             last_phase = -1;
+            for (int i = 0; i < 80; i++)
+            {
+                ffat_last_factor[i] = -1;
+            }
         }
 
         void link_modal(ModalSound *modal)
