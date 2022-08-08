@@ -63,7 +63,7 @@ namespace SoundRender
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
-            ImGui::Text("FPS: %.4f", ImGui::GetIO().Framerate);
+            
             update();
             // Rendering
             ImGui::Render();

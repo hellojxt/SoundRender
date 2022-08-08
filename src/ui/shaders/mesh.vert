@@ -36,6 +36,6 @@ void main()
     vec3 norm = normalize(Normal);
     refraction = refract(viewPos, norm, RelaN);
     reflection = reflect(viewPos, norm);
-    fresnel = R0 + (1.0 - R0) * pow((1.0 - dot(-viewDir, norm)), 5.0);
+    fresnel = R0 + (1.0 - R0) * pow((1.0 - dot(-viewDir, norm)), 0.5);
     return;
 }

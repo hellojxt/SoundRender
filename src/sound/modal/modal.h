@@ -58,6 +58,7 @@ namespace SoundRender
         int select_voxel_vertex_idx[8];
         bool click_current_frame;
         std::string filename;
+        ImFont *font = nullptr;
         void init(const std::string& modalName, int materialID);
 
         void link_mesh_render(MeshRender *mesh_render)

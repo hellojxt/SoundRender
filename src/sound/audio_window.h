@@ -14,6 +14,7 @@ namespace SoundRender
         AudioWapper audio;
         ModalSound modal;
         int select_object_idx = 0;
+        int material_select_idx = 0;
         std::vector<std::string> filename_lst;
         std::vector<std::string> basename_lst;
 
@@ -51,8 +52,8 @@ namespace SoundRender
 
         void update()
         {
-            
-            if (ImGui::TreeNode("Object Model"))
+            ImGui::Text("Objects");
+            if (ImGui::BeginListBox("##Object List"))
             {
                 for (int n = 0; n < basename_lst.size(); n++)
                 {
@@ -61,21 +62,44 @@ namespace SoundRender
                         if (select_object_idx != n)
                         {
                             select_object_idx = n;
-                            audio.material_select_idx = 0;
+                            material_select_idx = 0;
                             modal.SetMaterial(0, true);
                             init();
                         }
                     }
                 }
-                ImGui::TreePop();
+
+                ImGui::EndListBox();
             }
 
+            ImGui::Text("Materials");
+            if (ImGui::BeginListBox("##Material"))
+            {
+                for (int n = 0; n < IM_ARRAYSIZE(MaterialConst::names); n++)
+                {
+                    const bool is_selected = (material_select_idx == n);
+                    if (ImGui::Selectable(MaterialConst::names[n].c_str(), is_selected))
+                    {
+                        if (material_select_idx != n)
+                        {
+                            material_select_idx = n;
+                            modal.init(modal.filename, material_select_idx);
+                            modal.SetMaterial(material_select_idx, true);
+                        }
+                    }
+                    // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndListBox();
+            }
+
+            ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
             modal.update();
 
-            ImGui::Text("\n");
+            // ImGui::Text("\n");
 
             audio.update();
-
         }
         ~AudioWindow() { audio.close(); }
     };

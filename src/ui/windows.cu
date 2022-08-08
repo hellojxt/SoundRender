@@ -71,10 +71,10 @@ namespace SoundRender
 
         loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_X, "cm_pos_x.png");
         loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, "cm_neg_x.png");
-        loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, "cm_pos_y.png");
-        loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, "cm_neg_y.png");
-        loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, "cm_pos_z.png");
-        loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, "cm_neg_z.png");
+        loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, "cm_pos_z.png");
+        loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, "cm_neg_z.png");
+        loadOneFacet(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, "cm_pos_y.png");
+        loadOneFacet(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, "cm_neg_y.png");
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
